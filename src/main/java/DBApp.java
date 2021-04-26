@@ -1,18 +1,8 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 
 public class DBApp implements DBAppInterface {
 	
@@ -76,22 +66,26 @@ public class DBApp implements DBAppInterface {
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
 	public void insertIntoTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
-	
+
 		//check if columns in hashtable exist in metadata and are of correct datatypes
 //////////check date-time input constraintss///////////////////////////////////////////////////////////
 		checkInsertInputConstraints(strTableName,htblColNameValue);
-		
+
 		File dir = new File("src\\main\\resources\\data");
 		File[] directoryListing = dir.listFiles();
 		if (directoryListing != null) {
-			boolean foundPage=false;
-			for (File page : directoryListing) {
-				String tableName=getFileTableName(page.getName());
-				if(tableName.equals(strTableName)) {
-					foundPage=true;
-				}
-			}
-			if(!foundPage) {
+//			boolean foundPage=false;
+//			for (File page : directoryListing) {
+//				String tableName=getFileTableName(page.getName());
+//				if(tableName.equals(strTableName)) {
+//					foundPage=true;
+//				}
+//			}
+
+			int numberOfpages;
+			numberOfpages = countNumberOfPagesWithoutOverflow(strTableName);
+
+			if(numberOfpages==0) {
 				Vector<Hashtable<String,Object>> newPage =new Vector();
 				newPage.add(htblColNameValue);
 				try {
@@ -105,9 +99,32 @@ public class DBApp implements DBAppInterface {
 			      } catch (IOException i) {
 			         i.printStackTrace();
 			      }
-				
-				
 			}else {
+				String primaryKey="";
+				String primarykeyType="";
+				try {
+					BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+					String current = br.readLine();
+					// check if column names in hashtable exist in metadata
+					while(current!=null) {
+						String arr[]=current.split(",");
+						//check if metadata row has same table name as input
+						if(arr[0].equals(strTableName)) {
+							//check if hashtable contains same column name as metadata
+							if(arr[3].equals("true")) {
+								primaryKey=arr[1];
+								primarykeyType=arr[2];
+							}
+						}
+					}
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+				Object primarykeyvalue=htblColNameValue.get(primaryKey);
+
+
+
 				
 			}
 			
@@ -228,6 +245,7 @@ public class DBApp implements DBAppInterface {
 						//check if this is primary key
 						if(arr[3].equals("true")) {
 							primaryKeyFound=true;
+
 						}
 						//check if metadata row has same datatype of input value
 						try {
@@ -298,4 +316,244 @@ public class DBApp implements DBAppInterface {
 		
 		return Integer.parseInt(overflowNumber);
 	}
+
+	// comparing objects
+	public int compare(Object obj1, Object obj2, String primarykeyType){
+
+		if(primarykeyType.equals("java.lang.Double")){
+			if(((double)obj1)>((double)obj2))
+				return 1;
+			else if(((double)obj1)<((double)obj2))
+				return -1;
+			else
+				return 0;
+		}
+		else if(primarykeyType.equals("java.lang.Integer")){
+			if(((int)obj1)>((int)obj2))
+				return 1;
+			else if(((int)obj1)<((int)obj2))
+				return -1;
+			else
+				return 0;
+		}
+		else if(primarykeyType.equals("java.util.Date")){
+			return 	((Date)obj1).compareTo((Date)obj2);
+		}
+		else if(primarykeyType.equals("java.lang.String")){
+			return ((String)obj1).compareTo((String)obj2);
+		}
+		return -100;
+	}
+
+	//searching for the overflow page needed to store the new input
+	public String binarySearchOnOverflowPages(String TableName, int TotalNumberOfOverflowPages, String PrimaryKey,
+											  Object PrimaryKeyValue, String primarykeyType, int page) throws DBAppException{
+		int startvalue = 0;
+		int endvalue = TotalNumberOfOverflowPages;
+		int mid;
+		while (startvalue<=endvalue) {
+
+			mid = (startvalue + endvalue) / 2;
+			//here after getting the middle page of the overflow pagesof this specific page we get its path
+			String path = "src\\main\\resources\\data\\" + TableName + "[" + page + "](" + mid + ").class";
+			//getting the this over flow page to check if its in the range of this overflow page
+			Vector<Hashtable<String,Object>> v = null;
+			try {
+				FileInputStream fileIn = new FileInputStream(path);
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+				v = (Vector) in.readObject();
+				in.close();
+				fileIn.close();
+			} catch (IOException i) {
+				i.printStackTrace();
+			} catch (ClassNotFoundException c) {
+				c.printStackTrace();
+			}
+			//max val of this overflow page
+			Object maxValue = v.get(v.size()-1).get(PrimaryKey);
+			//min val of this overflow page
+			Object minValue = v.get(0).get(PrimaryKey);
+
+			//comparing the primary key value to the min value
+			int comp = compare(PrimaryKeyValue,minValue,primarykeyType);
+			if(comp==0){
+				throw new DBAppException("Primary key already exists!");
+			}
+			//if the primary value <min val we take the half before the mid
+			else if(comp<0){
+				endvalue=mid-1;
+			}else{
+
+				// else we compare it to the max val
+				int comp2 = compare(PrimaryKeyValue,maxValue,primarykeyType);
+				if(comp2==0){
+					throw new DBAppException("Primary key already exists!");
+				}
+				// if it is less than the max val then its in in this over flow page
+				else if(comp2<0){
+					return TableName + "[" + page + "](" + mid + ").class";
+				}
+				//else we take the half after the mid
+				else{
+					startvalue=mid+1;
+				}
+			}
+		}
+		return "";
+	}
+	public String binarySearchOnPages(String TableName, int TotalNumberOfPages, String PrimaryKey, Object PrimaryKeyValue, String primarykeyType) throws DBAppException {
+
+		int startvalue = 1;
+		int endvalue = TotalNumberOfPages;
+		int mid;
+
+
+
+		//checking if the value of the input less than the min val in the table an rreturning the first page
+		String path3 = "src\\main\\resources\\data\\" + TableName + "[1](0).class";
+
+		Vector<Hashtable<String,Object>> v5 = null;
+		try {
+			FileInputStream fileIn = new FileInputStream(path3);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			v5 = (Vector) in.readObject();
+			in.close();
+			fileIn.close();
+		} catch (IOException i) {
+			i.printStackTrace();
+		} catch (ClassNotFoundException c) {
+			c.printStackTrace();
+		}
+		Object minValue3 = v5.get(0).get(PrimaryKey);
+		int comp5 = compare(PrimaryKeyValue,minValue3,primarykeyType);
+		if(comp5<0){
+			return TableName + "[1](0).class";
+		}
+
+		// binary search for the page
+
+		while (startvalue<=endvalue){
+
+			mid = (startvalue + endvalue)/2;
+			String path = "src\\main\\resources\\data\\" + TableName + "[" + mid + "](0).class";
+
+			Vector<Hashtable<String,Object>> v = null;
+			try {
+				FileInputStream fileIn = new FileInputStream(path);
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+				v = (Vector) in.readObject();
+				in.close();
+				fileIn.close();
+			} catch (IOException i) {
+				i.printStackTrace();
+			} catch (ClassNotFoundException c) {
+				c.printStackTrace();
+			}
+			Object maxValue = null;
+			// getting the min val of the page
+			Object minValue = v.get(0).get(PrimaryKey);
+
+			//getting the number of overflow pages of this page
+			int numberofoverflows = countNumberOfPagesWithOverflow(TableName,mid);
+
+			//if its a zero then it doesnot have overflows then its max is in this page in the end
+			if (numberofoverflows==0){
+				maxValue = v.get(v.size()-1).get(PrimaryKey);
+			}else{
+				//else we get the last overflow page and get its last vlue to be the max val
+				Vector<Hashtable<String,Object>> v2 = null;
+				String path2 = "src\\main\\resources\\data\\" + TableName + "[" + mid + "](" + numberofoverflows + ").class";
+				try {
+					FileInputStream fileIn = new FileInputStream(path2);
+					ObjectInputStream in = new ObjectInputStream(fileIn);
+					v2 = (Vector) in.readObject();
+					in.close();
+					fileIn.close();
+				} catch (IOException i) {
+					i.printStackTrace();
+				} catch (ClassNotFoundException c) {
+					c.printStackTrace();
+				}
+				maxValue= v2.get(v2.size()-1).get(PrimaryKey);
+			}
+			// wecompare  the primary val to the min val
+			int comp = compare(PrimaryKeyValue,minValue,primarykeyType);
+			if(comp==0){
+				throw new DBAppException("The primary key already exists!");
+			}
+			//if it is less than the min val then we take the part before the mid val
+			else if(comp<0){
+				endvalue = mid-1;
+			}
+			//else if it is greater than the min
+			else{
+				// compare the primary val to the max val
+				int comp2 = compare(PrimaryKeyValue,maxValue,primarykeyType);
+				if(comp2==0){
+					throw new DBAppException("The primary key already exists!");
+				}
+				//if it is grater than the max val then we take the part after the mid
+				else if(comp2>0){
+					startvalue=mid +1;
+
+				}//if the primary val less than the max then its in this page mid or one of its over flow
+				 else{
+				 	//if there is no overflows we return this page
+					if(numberofoverflows==0){
+						return TableName + "[" + mid + "](0).class";
+					}// else we binary search on the page and its overflows to find its correct page
+					else {
+						String overflowres = binarySearchOnOverflowPages(TableName, numberofoverflows,
+								PrimaryKey, PrimaryKeyValue, primarykeyType, mid);
+						return overflowres;
+					}
+				}
+			}
+		}
+
+		return "";
+	}
+
+
+	//count the pages for a specific table
+	public int countNumberOfPagesWithoutOverflow(String Tablename){
+
+		File dir = new File("src\\main\\resources\\data");
+		File[] directoryListing = dir.listFiles();
+		int counter =0;
+		if (directoryListing != null) {
+			for (File page : directoryListing) {
+				String tableName=getFileTableName(page.getName());
+				int overflowno = getFileOverflowNumber(page.getName());
+				if(tableName.equals(Tablename) && overflowno==0) {
+					counter++;
+				}
+				}
+			}
+		return counter;
+	}
+
+	//count the overflow pages for a specific page
+	public int countNumberOfPagesWithOverflow(String Tablename, int Number){
+
+		File dir = new File("src\\main\\resources\\data");
+		File[] directoryListing = dir.listFiles();
+		int counter =0;
+		if (directoryListing != null) {
+			for (File page : directoryListing) {
+				String tableName=getFileTableName(page.getName());
+				int overflowno = getFileOverflowNumber(page.getName());
+				int pageNumber = getFilePageNumber(page.getName());
+
+				if(tableName.equals(Tablename) && pageNumber==Number && overflowno!=0) {
+					counter++;
+				}
+			}
+		}
+		return counter;
+	}
+
+
+
+
 }
