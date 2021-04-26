@@ -1,5 +1,13 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
 import java.util.Hashtable;
+import java.util.Vector;
+
+import org.junit.jupiter.api.Assertions;
 
 public class test {
 	public static void main(String[] args) throws DBAppException {
@@ -41,7 +49,76 @@ public class test {
         
 		
 		
-		System.out.println(getFilePageNumber("Employee[2](1)"));
+//		System.out.println(getFileOverflowNumber("Employee[243](1423)"));
+		
+//		File dir = new File("src\\main\\resources");
+//		File[] directoryListing = dir.listFiles();
+//		Boolean found=false;
+//		if (directoryListing != null) {
+//			boolean foundPage=false;
+//			for (File page : directoryListing) {
+//				String name=page.getName();
+//				System.out.println(name);
+//			}
+//		}
+		
+		
+		DBApp dbApp = new DBApp();
+//		String tableName = "courses";
+//
+//        Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
+//        htblColNameType.put("date_added", "java.util.Date");
+//        htblColNameType.put("course_id", "java.lang.String");
+//        htblColNameType.put("course_name", "java.lang.String");
+//        htblColNameType.put("hours", "java.lang.Integer");
+//
+//
+//        Hashtable<String, String> minValues = new Hashtable<>();
+//        minValues.put("date_added", "1990-01-01");
+//        minValues.put("course_id", "100");
+//        minValues.put("course_name", "AAAAAA");
+//        minValues.put("hours", "1");
+//
+//        Hashtable<String, String> maxValues = new Hashtable<>();
+//        maxValues.put("date_added", "2000-12-31");
+//        maxValues.put("course_id", "2000");
+//        maxValues.put("course_name", "zzzzzz");
+//        maxValues.put("hours", "24");
+//
+//        dbApp.createTable(tableName, "date_added", htblColNameType, minValues, maxValues);
+		
+//        dbApp.init();
+//
+//        String table = "courses";
+//        Hashtable<String, Object> row = new Hashtable();
+//
+//        Date date_added = new Date(2011 - 1900, 4 - 1, 1);
+//        row.put("date_added", date_added);
+//
+//        row.put("course_id", "foo");
+//        row.put("course_name", "bar");
+//        row.put("hours", 13);
+//
+//        dbApp.insertIntoTable(table, row);
+		Vector<Hashtable<String,Object>> v = null;
+	      try {
+	         FileInputStream fileIn = new FileInputStream("src\\main\\resources\\data\\courses[1](0).class");
+	         ObjectInputStream in = new ObjectInputStream(fileIn);
+	         v = (Vector) in.readObject();
+	         in.close();
+	         fileIn.close();
+	      } catch (IOException i) {
+	         i.printStackTrace();
+	         return;
+	      } catch (ClassNotFoundException c) {
+	         System.out.println("Employee class not found");
+	         c.printStackTrace();
+	         return;
+	      }
+	      
+	      System.out.println(v.get(0).toString());
+		
+		
 	}
 	
 	
@@ -69,7 +146,6 @@ public class test {
 		c++;
 		while(fileName.charAt(c)!=']') {
 			pageNumber+=fileName.charAt(c);
-			System.out.println("lol");
 			c++;
 		}
 		

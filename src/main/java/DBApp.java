@@ -1,9 +1,11 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -74,26 +76,43 @@ public class DBApp implements DBAppInterface {
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
 	public void insertIntoTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+	
 		//check if columns in hashtable exist in metadata and are of correct datatypes
+//////////check date-time input constraintss///////////////////////////////////////////////////////////
 		checkInsertInputConstraints(strTableName,htblColNameValue);
 		
 		File dir = new File("src\\main\\resources\\data");
 		File[] directoryListing = dir.listFiles();
-		Boolean found=false;
 		if (directoryListing != null) {
 			boolean foundPage=false;
 			for (File page : directoryListing) {
-				String name=page.getName();
-				
-				if(name.equals(strTableName)) {
-					
+				String tableName=getFileTableName(page.getName());
+				if(tableName.equals(strTableName)) {
+					foundPage=true;
 				}
 			}
+			if(!foundPage) {
+				Vector<Hashtable<String,Object>> newPage =new Vector();
+				newPage.add(htblColNameValue);
+				try {
+			         FileOutputStream fileOut =
+			         new FileOutputStream("src\\main\\resources\\data\\"+strTableName+"[1](0)"+".class");
+			         ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			         out.writeObject(newPage);
+			         out.close();
+			         fileOut.close();
+			         System.out.println("src\\main\\resources\\data\\"+strTableName+"[1](0)"+".class");
+			      } catch (IOException i) {
+			         i.printStackTrace();
+			      }
+				
+				
+			}else {
+				
+			}
+			
+			
 		}
-		
-		 
-		 
-		 
 		
 		 
 		 //for loop over file names get min page number and max page number
@@ -101,31 +120,9 @@ public class DBApp implements DBAppInterface {
 		 //if less than look left.. if greater than look right.. if between binary search over the overflows
 		 //and when reaching the required page binary search over the primary key...
 		 
-		 //
-		 
-		 
-		 
-		 
-		 
-		 //Insertion sort into existing pages or create new page if no pages exit
-			
 			
 	}
 	
-	public void abata(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
-		
-		
-		 File dir = new File("src\\main\\resources\\data");
-		 File[] directoryListing = dir.listFiles();
-		 Boolean found=false;
-		 if (directoryListing != null) {
-		   for (File page : directoryListing) {
-		     String name=page.getName();
-		     
-		   }
-		 }
-		
-	}
 	// following method updates one row only
 	// htblColNameValue holds the key and new value
 	// htblColNameValue will not include clustering key as column name
@@ -175,7 +172,6 @@ public class DBApp implements DBAppInterface {
 			
 			br.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return false;
@@ -233,7 +229,6 @@ public class DBApp implements DBAppInterface {
 						if(arr[3].equals("true")) {
 							primaryKeyFound=true;
 						}
-						
 						//check if metadata row has same datatype of input value
 						try {
 							if(!Class.forName(arr[2]).isInstance(htblColNameValue.get(arr[1]))) {
@@ -245,6 +240,7 @@ public class DBApp implements DBAppInterface {
 						countCorrectColumns++;
 					}
 				}
+				current=br.readLine();
 			}
 			
 			br.close();
