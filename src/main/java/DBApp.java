@@ -67,101 +67,55 @@ public class DBApp implements DBAppInterface {
 			e.printStackTrace();
 		}
 		
-		//Delete class table and perform the csv stuff here ...
-		//make sure to check for datatypes that they are from the 4 specified
+
 	}
 
 
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
 	public void insertIntoTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
-		BufferedReader br;
-		try {
-			br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
-			String current = br.readLine();
-			int columnsFound=0;
-			boolean foundCluster=false;
-			while (current != null) {
-				String arr[]=current.split(",");
-				//Check if same Table
-				if(arr[0].equals(strTableName)) {
-					//Check if the column is being inserted in the hashtable
-					if(htblColNameValue.containsKey(arr[1])) {
-						try {
-							//Check if the class of the object in the hashtable is an instance of 
-							//the column class
-							if(!Class.forName("arr[2]").isInstance(htblColNameValue.get(arr[1]))) {
-								throw new DBAppException();
-							}
-							columnsFound++;
-							
-							if(arr[3].equals("True")) {
-								foundCluster=true;
-							}
-						} catch (ClassNotFoundException e) {
-							e.printStackTrace();
-						}
-					}
+		//check if columns in hashtable exist in metadata and are of correct datatypes
+		checkInsertInputConstraints(strTableName,htblColNameValue);
+		
+		File dir = new File("src\\main\\resources\\data");
+		File[] directoryListing = dir.listFiles();
+		Boolean found=false;
+		if (directoryListing != null) {
+			boolean foundPage=false;
+			for (File page : directoryListing) {
+				String name=page.getName();
+				
+				if(name.equals(strTableName)) {
+					
 				}
 			}
-			
-			if(!foundCluster|columnsFound!=htblColNameValue.size()) {
-				throw new DBAppException();
-			}
-			
-			//Insertion sort into existing pages or create new page if no pages exit
-			//
-			//
-			//
-			
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
+		
+		 
+		 
+		 
+		
+		 
+		 //for loop over file names get min page number and max page number
+		 // get to the middle page and get min primary key and max primary key ....(from it and it's overflows)
+		 //if less than look left.. if greater than look right.. if between binary search over the overflows
+		 //and when reaching the required page binary search over the primary key...
+		 
+		 //
+		 
+		 
+		 
+		 
+		 
+		 //Insertion sort into existing pages or create new page if no pages exit
+			
+			
 	}
-	
-
-	
-	
-	
-	
 	
 	public void abata(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		
 		
-		try {
-			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
-			String current = br.readLine();
-			boolean tableNameflag=false;
-			int columnsFound=0;
-			while (current != null) {
-				
-				String arr[]=current.split(",");
-				
-				if(htblColNameValue.containsKey(arr[1])){
-					Object value = htblColNameValue.get(arr[1]);
-				}
-				
-				
-				if(arr[0].equals(strTableName)&&arr[3].equals("True")) {
-					if(!htblColNameValue.containsKey(arr[1])) {
-						throw new DBAppException();
-					}
-					columnsFound++;
-				}else if(arr[0].equals(strTableName)&&htblColNameValue.containsKey(arr[1])&&arr[2].equals(htblColNameValue.get(arr[1]))) {
-					columnsFound++;
-				}
-			}
-			
-			if(columnsFound!=htblColNameValue.size()) {
-				throw new DBAppException();
-			}
-			
-			
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		File dir = new File("src\\main\\resources\\data");
+		 File dir = new File("src\\main\\resources\\data");
 		 File[] directoryListing = dir.listFiles();
 		 Boolean found=false;
 		 if (directoryListing != null) {
@@ -207,23 +161,24 @@ public class DBApp implements DBAppInterface {
 	
 	
 	//This method check if the inserted table already exists.
-	public void checkTableExists(String tableName) throws DBAppException {
+	public boolean checkTableExists(String tableName)  {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
 			String current = br.readLine();
 			while (current != null) {
 				String arr[]=current.split(",");
 				if(arr[0].equals(tableName)) {
-					throw new DBAppException();
+					return true;
 				}
 				current=br.readLine();
 			}
-			br.close();
 			
+			br.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return false;
 	}	
 	
 	public void checkDataTypeAndPrimaryExists(Hashtable<String, String> htblColNameType,String strClusteringKeyColumn) throws DBAppException {
@@ -236,23 +191,115 @@ public class DBApp implements DBAppInterface {
 				clusterFound=true;
 			}
 			String dataType=htblColNameType.get(key);
-			if(!(dataType.equals("java.lang.Integer")|
-					dataType.equals("java.lang.String")|
-					dataType.equals("java.lang.Double")|
+			if(!(dataType.equals("java.lang.Integer")||
+					dataType.equals("java.lang.String")||
+					dataType.equals("java.lang.Double")||
 					dataType.equals("java.util.Date"))) {
-				throw new DBAppException();
+				throw new DBAppException("Wrong datatypes!");
 			}
 		}
 		if(!clusterFound) {
-			throw new DBAppException();
+			throw new DBAppException("Primary key not found!");
 		}
 	}
 	
 	public void checkCreateTableExceptions(String strTableName,String strClusteringKeyColumn,Hashtable<String, String> htblColNameType) throws DBAppException {
 		//check if table already exists
-		checkTableExists(strTableName);
+		if(checkTableExists(strTableName)) {
+			throw new DBAppException("Table already exists!");
+		}
 		//check inserted dataTypes
 		checkDataTypeAndPrimaryExists(htblColNameType,strClusteringKeyColumn);
 	}
-
+	
+	public void checkInsertInputConstraints(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+		
+		if(!checkTableExists(strTableName)) {
+			throw new DBAppException("Table does not exist!");
+		}
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			// check if column names in hashtable exist in metadata
+			int countCorrectColumns=0;
+			boolean primaryKeyFound=false;
+			while(current!=null) {
+				String arr[]=current.split(",");
+				//check if metadata row has same table name as input
+				if(arr[0].equals(strTableName)) {
+					//check if hashtable contains same column name as metadata
+					if(htblColNameValue.containsKey(arr[1])) {
+						//check if this is primary key
+						if(arr[3].equals("true")) {
+							primaryKeyFound=true;
+						}
+						
+						//check if metadata row has same datatype of input value
+						try {
+							if(!Class.forName(arr[2]).isInstance(htblColNameValue.get(arr[1]))) {
+								throw new DBAppException("Wrong datatype in column"+arr[1]+" !");
+							}
+						} catch (ClassNotFoundException e) {
+							e.printStackTrace();
+						}
+						countCorrectColumns++;
+					}
+				}
+			}
+			
+			br.close();
+			if(!(countCorrectColumns==htblColNameValue.size())) {
+				throw new DBAppException("Hashtable Columns are not in metadata!");
+			}
+			if(!primaryKeyFound) {
+				throw new DBAppException("Primary key not inserted!");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	
+	
+	public String getFileTableName(String fileName) {
+		String tableName="";
+		int c=0;
+		while(fileName.charAt(c)!='[') {
+			tableName+=fileName.charAt(c);
+			c++;
+		}
+		return tableName;
+		
+	}
+	
+	public int getFilePageNumber(String fileName) {
+		String pageNumber="";
+		int c=0;
+		while(fileName.charAt(c)!='[') {
+			c++;
+		}
+		c++;
+		while(fileName.charAt(c)!=']') {
+			pageNumber+=fileName.charAt(c);
+			c++;
+		}
+		
+		return Integer.parseInt(pageNumber);
+	}
+	
+	public int getFileOverflowNumber(String fileName) {
+		String overflowNumber="";
+		int c=0;
+		while(fileName.charAt(c)!='(') {
+			c++;
+		}
+		c++;
+		while(fileName.charAt(c)!=')') {
+			overflowNumber+=fileName.charAt(c);
+			c++;
+		}
+		
+		return Integer.parseInt(overflowNumber);
+	}
 }
