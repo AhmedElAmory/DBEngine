@@ -2,12 +2,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Vector;
 
 public class DBApp implements DBAppInterface {
@@ -41,12 +43,30 @@ public class DBApp implements DBAppInterface {
 	// type as value
 	// htblColNameMin and htblColNameMax for passing minimum and maximum values
 	// for data in the column. Key is the name of the column
-
+	
 	public void createTable(String strTableName, String strClusteringKeyColumn,
 			Hashtable<String, String> htblColNameType, Hashtable<String, String> htblColNameMin,
 			Hashtable<String, String> htblColNameMax) throws DBAppException {
-		 
-		Table t=new Table(strTableName, strClusteringKeyColumn, htblColNameType, htblColNameMin, htblColNameMax);
+		
+		checkCreateTableExceptions(strTableName,strClusteringKeyColumn,htblColNameType);
+		try {
+			//Reading the metadata file
+			FileWriter csvWriter = new FileWriter("src\\main\\resources\\metadata.csv",true);
+			//Looping over the Hashtable
+			Set<String> keys = htblColNameType.keySet();
+			for(String key: keys) {
+				boolean cluster=false;
+				if(strClusteringKeyColumn.equals(key)) {
+					cluster=true;
+				}
+				csvWriter.append("\n"+strTableName+","+key+","+htblColNameType.get(key)+","+cluster+","+false+","+htblColNameMin.get(key)+","+htblColNameMax.get(key));
+			}
+			csvWriter.flush();
+			csvWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		//Delete class table and perform the csv stuff here ...
 		//make sure to check for datatypes that they are from the 4 specified
 	}
@@ -179,6 +199,60 @@ public class DBApp implements DBAppInterface {
 	
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
 		return null;
+	}
+	
+	
+	
+	//Supplement methods
+	
+	
+	//This method check if the inserted table already exists.
+	public void checkTableExists(String tableName) throws DBAppException {
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			while (current != null) {
+				String arr[]=current.split(",");
+				if(arr[0].equals(tableName)) {
+					throw new DBAppException();
+				}
+				current=br.readLine();
+			}
+			br.close();
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}	
+	
+	public void checkDataTypeAndPrimaryExists(Hashtable<String, String> htblColNameType,String strClusteringKeyColumn) throws DBAppException {
+		
+		boolean clusterFound=false;
+		Set<String> keys = htblColNameType.keySet();
+		for(String key: keys) {
+			//Check if primary key exists
+			if(key.equals(strClusteringKeyColumn)) {
+				clusterFound=true;
+			}
+			String dataType=htblColNameType.get(key);
+			if(!(dataType.equals("java.lang.Integer")|
+					dataType.equals("java.lang.String")|
+					dataType.equals("java.lang.Double")|
+					dataType.equals("java.util.Date"))) {
+				throw new DBAppException();
+			}
+		}
+		if(!clusterFound) {
+			throw new DBAppException();
+		}
+	}
+	
+	public void checkCreateTableExceptions(String strTableName,String strClusteringKeyColumn,Hashtable<String, String> htblColNameType) throws DBAppException {
+		//check if table already exists
+		checkTableExists(strTableName);
+		//check inserted dataTypes
+		checkDataTypeAndPrimaryExists(htblColNameType,strClusteringKeyColumn);
 	}
 
 }
