@@ -42,7 +42,7 @@ public class DBApp implements DBAppInterface {
 			Hashtable<String, String> htblColNameType, Hashtable<String, String> htblColNameMin,
 			Hashtable<String, String> htblColNameMax) throws DBAppException {
 		
-		checkCreateTableExceptions(strTableName,strClusteringKeyColumn,htblColNameType);
+		checkCreateTableExceptions(strTableName,strClusteringKeyColumn,htblColNameType,htblColNameMin,htblColNameMax);
 		try {
 			//Reading the metadata file
 			FileWriter csvWriter = new FileWriter("src\\main\\resources\\metadata.csv",true);
@@ -162,9 +162,6 @@ public class DBApp implements DBAppInterface {
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
 		return null;
 	}
-	
-	
-	
 	//Supplement methods
 	
 	
@@ -188,21 +185,34 @@ public class DBApp implements DBAppInterface {
 		return false;
 	}
 	
-	public void checkCreateTableExceptions(String strTableName,String strClusteringKeyColumn,Hashtable<String, String> htblColNameType) throws DBAppException {
+	public void checkCreateTableExceptions(String strTableName,String strClusteringKeyColumn
+			,Hashtable<String, String> htblColNameType,Hashtable<String, String> htblColNameMin
+			,Hashtable<String, String> htblColNameMax) throws DBAppException {
 		//check if table already exists
 		if(checkTableExists(strTableName)) {
 			throw new DBAppException("Table already exists!");
 		}
 		//check inserted dataTypes
-		checkDataTypeAndPrimaryExists(htblColNameType,strClusteringKeyColumn);
+		checkDataTypeAndPrimaryExists(htblColNameType,strClusteringKeyColumn,htblColNameMin,htblColNameMax);
 	}
 	
-	public void checkDataTypeAndPrimaryExists(Hashtable<String, String> htblColNameType,String strClusteringKeyColumn) throws DBAppException {
+	public void checkDataTypeAndPrimaryExists(Hashtable<String, String> htblColNameType,String strClusteringKeyColumn
+			,Hashtable<String, String> htblColNameMin
+			,Hashtable<String, String> htblColNameMax) throws DBAppException {
+		
+		if(htblColNameType.size()!=htblColNameMin.size()&&htblColNameType.size()!=htblColNameMax.size()) {
+			throw new DBAppException("The inserted hashtables are not of same size");
+		}
 		
 		boolean clusterFound=false;
 		Set<String> keys = htblColNameType.keySet();
 		for(String key: keys) {
 			//Check if primary key exists
+			if(!htblColNameMax.contains(key)) {
+				throw new DBAppException("Column "+key+" has no maximum value inserted");
+			}else if(!htblColNameMin.contains(key)) {
+				throw new DBAppException("Column "+key+" has no minimum value inserted");
+			}
 			if(key.equals(strClusteringKeyColumn)) {
 				clusterFound=true;
 			}
@@ -212,6 +222,15 @@ public class DBApp implements DBAppInterface {
 					dataType.equals("java.lang.Double")||
 					dataType.equals("java.util.Date"))) {
 				throw new DBAppException("Column "+key+" has an unsupported data type");
+			}else if(dataType.equals("java.util.Date")) {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+				try {
+			          format.parse(htblColNameMax.get(key));
+			          format.parse(htblColNameMin.get(key));
+			     }
+			     catch(ParseException e){
+			    	 throw new DBAppException("Column "+key+" has wrong date format, Make sure it's (YYYY-MM-DD)");
+			     }
 			}
 		}
 		if(!clusterFound) {
