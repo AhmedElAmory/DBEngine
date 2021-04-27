@@ -70,7 +70,7 @@ public class DBApp implements DBAppInterface {
 		//check if columns in hashtable exist in metadata and are of correct datatypes
 //////////check date-time input constraintss///////////////////////////////////////////////////////////
 //////////make sure of min max constraints and size and that they are the same as name-type hashtable
-		checkInsertInputConstraints(strTableName,htblColNameValue);
+		checkInsertConstraints(strTableName,htblColNameValue);
 
 		File dir = new File("src\\main\\resources\\data");
 		File[] directoryListing = dir.listFiles();
@@ -120,13 +120,6 @@ public class DBApp implements DBAppInterface {
 				
 			}
 		}
-		 
-		 //for loop over file names get min page number and max page number
-		 // get to the middle page and get min primary key and max primary key ....(from it and it's overflows)
-		 //if less than look left.. if greater than look right.. if between binary search over the overflows
-		 //and when reaching the required page binary search over the primary key...
-		 
-			
 	}
 	
 	// following method updates one row only
@@ -136,6 +129,79 @@ public class DBApp implements DBAppInterface {
 	public void updateTable(String strTableName, String strClusteringKeyValue,
 			Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		
+		checkUpdateConstraints(strTableName, strClusteringKeyValue, htblColNameValue);
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			Object clusteringKeyValue="";
+			String clusteringKeyType="";
+			String clusteringKeyColumnName="";
+			while(current!=null) {
+				String arr[]=current.split(",");
+				if(arr[0].equals(strTableName)) {
+					if(arr[3].equals("true")) {
+						if(arr[2].equals("java.lang.Integer")) {
+							try {
+								clusteringKeyValue=Integer.parseInt(strClusteringKeyValue);
+							}catch (Exception e) {
+								throw new DBAppException("The inserted primary key value is of wrong type");
+							}
+						}else if(arr[2].equals("java.lang.Double")) {
+							try {
+								clusteringKeyValue=Double.parseDouble(strClusteringKeyValue);
+							}catch (Exception e) {
+								throw new DBAppException("The inserted primary key value is of wrong type");
+							}
+						}else if(arr[2].equals("java.util.Date")) {
+							try {
+								SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+								try {
+							        format.parse(strClusteringKeyValue);
+							     }
+							     catch(ParseException e){
+							    	 throw new DBAppException("The primary key has wrong date format make sure it's (YYYY-MM-DD)");
+							     }
+								String primaryKeyDates[]=strClusteringKeyValue.split("-");
+								clusteringKeyValue = new Date(Integer.parseInt(primaryKeyDates[0]), Integer.parseInt(primaryKeyDates[1]), Integer.parseInt(primaryKeyDates[2]));
+							}catch (Exception e) {
+								throw new DBAppException("The inserted primary key value is of wrong type");
+							}
+						}else {
+							clusteringKeyValue=strClusteringKeyValue;
+						}
+						clusteringKeyType=arr[2];
+						clusteringKeyColumnName=arr[1];
+					}
+				}
+				current=br.readLine();
+			}
+			br.close();
+			
+			String location=getPageAndIndex(strTableName, clusteringKeyValue, clusteringKeyColumnName, clusteringKeyType);
+			
+			String locations[]=location.split(" ");
+			String pageFileName=locations[0];
+			int index=Integer.parseInt(locations[1]);
+			
+			Vector<Hashtable<String, Object>> pageVector = readPageIntoVector(pageFileName);
+			
+			pageVector.get(index).putAll(htblColNameValue);
+			
+			try {
+				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\"+pageFileName);
+				ObjectOutputStream out = new ObjectOutputStream(fileOut);
+				out.writeObject(pageVector);
+				out.close();
+				fileOut.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			//call method with tableName,ClusteringKey name,Clustering key value, Clustering key type,and hashtable
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 	// following method could be used to delete one or more rows.
@@ -144,12 +210,103 @@ public class DBApp implements DBAppInterface {
 	// htblColNameValue entries are ANDED together
 	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
 
-	
-	
-	
-	
-	
+		//Check constraints
+		String PrimaryKey = checkDeleteConstraints(strTableName,htblColNameValue);
+
+		//Check if PrimaryKey exists
+		if(PrimaryKey.equals("")){
+			//Do linear search
+			linearDeleteOnTable(strTableName,htblColNameValue);
+		}else {
+			//If primarykey exists then we will delete only one unique row so we can use binary search as the column is sorted
+			//Do binary search
+			String[] primarykeyData = PrimaryKey.split(" ");
+
+			String pageToDeleteFrom = binaryDeleteFromTable(strTableName, htblColNameValue, primarykeyData[0], primarykeyData[1]);
+
+			if(!(pageToDeleteFrom.equals(""))){
+				Vector<Hashtable<String, Object>> pageVector = readPageIntoVector(pageToDeleteFrom);
+				int start = 0;
+				int end = pageVector.size() - 1;
+
+				//Binary Search to get the page
+				while (start <= end) {
+					int mid = (start + end) / 2;
+
+					int comparison = compare(pageVector.get(mid).get(primarykeyData[0]), htblColNameValue.get(primarykeyData[0]), primarykeyData[1]);
+					if (comparison == 0) {
+						pageVector.remove(mid);
+						try {
+							FileOutputStream fileOut =
+									new FileOutputStream("src\\main\\resources\\data\\"+strTableName+"["+getFilePageNumber(pageToDeleteFrom)+"]("+getFileOverflowNumber(pageToDeleteFrom)+")"+".class");
+							ObjectOutputStream out = new ObjectOutputStream(fileOut);
+							out.writeObject(pageVector);
+							out.close();
+							fileOut.close();}
+						catch (IOException e) {
+							e.printStackTrace();
+						}
+						int i = getFilePageNumber(pageToDeleteFrom);
+						int j = getFileOverflowNumber(pageToDeleteFrom);
+						int TotalNumberOfPages = countNumberOfPagesWithoutOverflows(strTableName);
+						int TotalNumberOfOverflowPages = countNumberOfPageOverflows(strTableName, i);
+						//Check if page is empty
+						if (j == 0) { //Check if it is not an overflow page
+							if (pageVector.size() == 0) {  //If the page is empty (size of vector==0), we delete it
+								File filetobedeleted = new File("src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + j + ").class");
+								filetobedeleted.delete();
+
+								//Check if the deleted page had any overflows
+								if (TotalNumberOfOverflowPages == 0) {
+									// If no, we shift all the pages(and their overflows) under it up one step
+
+									for (int x = i + 1; x <= TotalNumberOfPages; x++) {
+										int temp = x - 1;
+										int TotalNumberOfOverflowPages2=countNumberOfPageOverflows(strTableName,x);
+										for (int k = 0; k <= TotalNumberOfOverflowPages2; k++) {
+											File oldfile = new File("src\\main\\resources\\data\\" + strTableName + "[" + x + "](" + k + ").class");
+											File newfile = new File("src\\main\\resources\\data\\" + strTableName + "[" + temp + "](" + k + ").class");
+											oldfile.renameTo(newfile);
+										}
+									}
+								} else {
+									//If Yes(it did have overflows), we shift only the overflows to the left one step
+									for (int l = 1; l <= TotalNumberOfOverflowPages; l++) {
+
+										File oldfile = new File("src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + l + ").class");
+										int temp = l - 1;
+										File newfile = new File("src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + temp + ").class");
+										oldfile.renameTo(newfile);
+									}
+								}
+							}
+						} else { // it is an overflow page
+							if (pageVector.size() == 0) {  //If the page is empty (size of vector==0), we delete it
+								File f1 = new File("src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + j + ").class");  //file to be deleted
+								f1.delete();
+
+								//Decrement all overflow pages with overflow number > j
+								for (int x = j + 1; x <= TotalNumberOfOverflowPages; x++) {
+									File f2 = new File("src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + x + ").class");
+									int temp = x - 1;
+									File f3 = new File("src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + temp + ").class");
+									f2.renameTo(f3);
+								}
+							}
+						}
+						break;
+					} else if (comparison > 0) {
+						end = mid - 1;
+					} else {
+						start = mid + 1;
+					}
+				}
+			}else{
+				System.out.println("No rows found");
+			}
+		}
 	}
+
 
 	
 	// following method creates one index – either multidimensional
@@ -268,7 +425,81 @@ public class DBApp implements DBAppInterface {
 		}
 	}
 	
-	public void checkInsertInputConstraints(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+	public void checkUpdateConstraints(String strTableName, String strClusteringKeyValue, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+		if(!checkTableExists(strTableName)) {
+			throw new DBAppException("Table does not exist!");
+		}
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			int countCorrectColumns=0;
+			while(current!=null) {
+				String arr[]=current.split(",");
+				if(arr[0].equals(strTableName)) {
+					if(htblColNameValue.containsKey(arr[1])) {
+						if(arr[2].equals("java.lang.Integer")) {
+							int compareToMin=compare(htblColNameValue.get(arr[1]), Integer.parseInt(arr[5]), arr[2]);
+							int compareToMax=compare(htblColNameValue.get(arr[1]), Integer.parseInt(arr[6]), arr[2]);
+							
+							if (compareToMin<0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+							}
+							if (compareToMax>0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum");
+							}
+						}else if(arr[2].equals("java.lang.Double")) {
+							int compareToMin=compare(htblColNameValue.get(arr[1]), Double.parseDouble(arr[5]), arr[2]);
+							int compareToMax=compare(htblColNameValue.get(arr[1]), Double.parseDouble(arr[6]), arr[2]);
+							
+							if (compareToMin<0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+							}
+							if (compareToMax>0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum value");
+							}
+						}else if(arr[2].equals("java.util.Date")) {
+							String minDates[]=arr[5].split("-");
+							String maxDates[]=arr[6].split("-");
+							int compareToMin=compare(htblColNameValue.get(arr[1]), new Date(Integer.parseInt(minDates[0]), Integer.parseInt(minDates[1]), Integer.parseInt(minDates[2])), arr[2]);
+							int compareToMax=compare(htblColNameValue.get(arr[1]), new Date(Integer.parseInt(maxDates[0]), Integer.parseInt(maxDates[1]), Integer.parseInt(maxDates[2])), arr[2]);
+							
+							if (compareToMin<0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+							}
+							if (compareToMax>0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum value");
+							}
+						}else {
+							int compareToMin=compare(htblColNameValue.get(arr[1]), arr[5], arr[2]);
+							int compareToMax=compare(htblColNameValue.get(arr[1]), arr[6], arr[2]);
+							
+							if (compareToMin<0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+							}
+							if (compareToMax>0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum value");
+							}
+						}
+						
+						countCorrectColumns++;
+					}
+				}
+				current=br.readLine();
+			}
+			
+			br.close();
+			if(!(countCorrectColumns==htblColNameValue.size())) {
+				throw new DBAppException("Hashtable Columns are not in metadata!");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+	}
+	
+	public void checkInsertConstraints(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		//5 min 6 max
 		if(!checkTableExists(strTableName)) {
 			throw new DBAppException("Table does not exist!");
@@ -342,8 +573,6 @@ public class DBApp implements DBAppInterface {
 								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum value");
 							}
 						}
-						
-						
 						countCorrectColumns++;
 					}
 				}
@@ -636,8 +865,285 @@ public class DBApp implements DBAppInterface {
 		} catch (ClassNotFoundException c) {
 			c.printStackTrace();
 		}
-
 		return  v;
 	}
+	
+	
+	////Delete Methodssssss
+	
+	public void linearDeleteOnTable(String strTableName, Hashtable<String, Object> htblColNameValue) {
+
+		int TotalNumberOfPages = countNumberOfPagesWithoutOverflows(strTableName);
+		//Loop on all pages
+		for(int i=TotalNumberOfPages ; i>=1 ; i--){
+			//First we loop on the overflows from the last overflow page to the first
+			int TotalNumberOfOverflowPages = countNumberOfPageOverflows(strTableName,i);
+			for(int j=TotalNumberOfOverflowPages ; j>=0 ; j--){
+				//Loop on current page
+				Vector<Hashtable<String, Object>> Page = readPageIntoVector(strTableName+"["+i+"](" + j + ").class");
+				for(int row=0; row<Page.size() ; row++){
+					//Loop on hashtable columns to check if all its values are equal to row values or not
+					boolean checkDelete= true;
+					Set<String> columns = htblColNameValue.keySet();
+					for(String column:columns){
+						if(!Page.get(row).get(column).equals(htblColNameValue.get(column))){
+							checkDelete=false;  //If false then we do not want to delete this row
+						}
+					}
+					if(checkDelete){
+						Page.remove(row);
+						try {
+							FileOutputStream fileOut =
+									new FileOutputStream("src\\main\\resources\\data\\"+strTableName+"["+i+"]("+j+")"+".class");
+							ObjectOutputStream out = new ObjectOutputStream(fileOut);
+							out.writeObject(Page);
+							out.close();
+							fileOut.close();}
+						catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				//Check if page is empty
+				if(j==0){ //Check if it is not an overflow page
+					if(Page.size()==0){  //If the page is empty (size of vector==0), we delete it
+						File filetobedeleted = new File("src\\main\\resources\\data\\"+strTableName+ "["+i+"]("+j+").class");
+						filetobedeleted.delete();
+
+						//Check if the deleted page had any overflows
+						if(TotalNumberOfOverflowPages==0){
+							// If no, we shift all the pages(and their overflows) under it up one step
+							for(int x=i+1 ; x<=TotalNumberOfPages; x++){
+								int temp = x-1;
+								int TotalNumberOfOverflowPages2=countNumberOfPageOverflows(strTableName,x);
+								for(int k=0; k<=TotalNumberOfOverflowPages2; k++){
+									File oldfile = new File("src\\main\\resources\\data\\"+strTableName+ "["+x+"]("+k+").class");
+									File newfile = new File("src\\main\\resources\\data\\"+strTableName+ "["+temp+"]("+k+").class");
+									oldfile.renameTo(newfile);
+								}
+							}
+						}else{
+							//If Yes(it did have overflows), we shift only the overflows to the left one step
+							for(int l=1 ; l<=TotalNumberOfOverflowPages ; l++){
+
+								File oldfile = new File("src\\main\\resources\\data\\"+strTableName+ "["+i+"]("+l+").class");
+								int temp =l-1;
+								File newfile = new File("src\\main\\resources\\data\\"+strTableName+ "["+i+"]("+temp+").class");
+								oldfile.renameTo(newfile);
+							}
+						}
+					}
+				}else{ // it is an overflow page
+					if(Page.size()==0){  //If the page is empty (size of vector==0), we delete it
+						File f1 = new File("src\\main\\resources\\data\\"+strTableName+ "["+i+"]("+j+").class");  //file to be deleted
+						f1.delete();
+
+						//Decrement all overflow pages with overflow number > j
+						for(int x=j+1 ; x<=TotalNumberOfOverflowPages; x++){
+							File f2 = new File("src\\main\\resources\\data\\"+strTableName+ "["+i+"]("+x+").class");
+							int temp = x-1;
+							File f3 = new File("src\\main\\resources\\data\\"+strTableName+ "["+i+"]("+temp+").class");
+							f2.renameTo(f3);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public String binaryDeleteFromTableOverflow(String tableName, int totalNumberOfOverflowPages, String primaryKey,
+													   Object primaryKeyValue, String primaryKeyType, int page){
+		int start = 0;
+		int end = totalNumberOfOverflowPages;
+		while (start<=end) {
+			int mid = (start + end) / 2;
+			//here after getting the middle page of the overflow pages of this specific page we get its path
+			//getting this over flow page to check if its in the range of this overflow page
+			Vector<Hashtable<String,Object>> currentPage = readPageIntoVector(tableName + "[" + page + "](" + mid + ").class");
+
+			//max value of this overflow page
+			Object maxValue = currentPage.get(currentPage.size()-1).get(primaryKey);
+			//min value of this overflow page
+			Object minValue = currentPage.get(0).get(primaryKey);
+
+			//comparing the primary key value to the minimum value
+			int compareToMinValue = compare(primaryKeyValue,minValue,primaryKeyType);
+			if(compareToMinValue==0){
+				return tableName+"[" + page + "](" + mid + ").class";
+			}
+			//if the primary value < minimum value we take the half before the mid
+			else if(compareToMinValue<0){
+				end=mid-1;
+			}else{
+				// else we compare it to the max value
+				int compareToMaxValue = compare(primaryKeyValue,maxValue,primaryKeyType);
+				if(compareToMaxValue==0){
+					return tableName+"[" + page + "](" + mid + ").class";
+				}
+				// if it is less than the maximum value then its in in this over flow page
+				else if(compareToMaxValue<0){
+					return tableName + "[" + page + "](" + mid + ").class";
+				}
+				else{
+					start= mid +1;
+				}
+			}
+		}
+		return "";
+	}
+
+	public String binaryDeleteFromTable(String tableName, Hashtable<String, Object> htblColNameValue,String primaryKeyColumn,String primaryKeyType){
+		int totalNumberOfPages=countNumberOfPagesWithoutOverflows(tableName);
+		Object primaryKeyValue=htblColNameValue.get(primaryKeyColumn);
+		int start = 1;
+		int end = totalNumberOfPages;
+
+		//Binary Search to get the page
+		while (start<=end){
+
+			int mid = (start + end)/2;
+			Vector<Hashtable<String,Object>> currentPage = readPageIntoVector(tableName + "[" + mid + "](0).class");
+			Object maxValue = null;
+
+			//Getting the minimum value of the page
+			Object minValue = currentPage.get(0).get(primaryKeyColumn);
+
+			//Getting the number of overflow pages of this page
+			int numberOfOverFlows = countNumberOfPageOverflows(tableName,mid);
+
+			//If the numberOfOverFlows is zero then the maximum value is the maximum of current page
+			if (numberOfOverFlows==0){
+				maxValue = currentPage.get(currentPage.size()-1).get(primaryKeyColumn);
+			}else{
+				//if it's not 0 then we get the maximum value from the last overflow page
+				Vector<Hashtable<String,Object>> lastOverflowPage = readPageIntoVector(tableName + "[" + mid + "](" + numberOfOverFlows + ").class");
+				maxValue= lastOverflowPage.get(lastOverflowPage.size()-1).get(primaryKeyColumn);
+			}
+			// we compare the primary value to the minimum value
+			int compareToMinValue = compare(primaryKeyValue,minValue,primaryKeyType);
+			if(compareToMinValue==0){
+				return tableName+"["+mid+"]"+"(0).class";
+			}
+			else if(compareToMinValue<0){
+				//if it is less than the minimum value then we take the part before the current/middle page
+				end = mid-1;
+			}
+			else if(compareToMinValue>0){
+				//else if it is greater than the minimum
+				// compare the primary value to the max value
+				int compareToMaxValue = compare(primaryKeyValue,maxValue,primaryKeyType);
+				if(compareToMaxValue==0){
+					return tableName + "[" + mid + "](" + numberOfOverFlows + ").class";
+				}
+				else if(compareToMaxValue>0){
+					//If it is greater than the maximum then we proceed with the binary search
+					start = mid + 1;
+				} else if(compareToMaxValue<0){
+					//if the primary value is less than the maximum then its in this page or one of its overflows
+					//if there is no overflows we return this page
+					if(numberOfOverFlows==0){
+						return tableName + "[" + mid + "](0).class";
+					}else {
+						// else we binary search on the page and its overflows to find the correct page
+						String overFlowResult = binaryDeleteFromTableOverflow(tableName, numberOfOverFlows,
+								primaryKeyColumn, primaryKeyValue, primaryKeyType, mid);
+						return overFlowResult;
+					}
+				}
+			}
+		}
+		return "";
+	}
+
+	// following method could be used to delete one or more rows.
+	// htblColNameValue holds the key and value. This will be used in search
+	// to identify which rows/tuples to delete.
+	// htblColNameValue entries are ANDED together
+	
+
+
+
+
+
+	public String checkDeleteConstraints(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+
+		String Primarykey = "";
+		String PrimarykeyType="";
+		if(!checkTableExists(strTableName)) {
+			throw new DBAppException("Table does not exist!");
+		}
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			// check if column names in hashtable exist in metadata
+			int countCorrectColumns=0;
+			while(current!=null) {
+				String arr[]=current.split(",");
+				//check if metadata row has same table name as input
+				if(arr[0].equals(strTableName)) {
+					//check if hashtable contains same column name as metadata
+					if(htblColNameValue.containsKey(arr[1])) {
+
+						//check if this column is the primary key
+						if(arr[3].equals("true")) {
+							Primarykey= arr[1];
+							PrimarykeyType=arr[2];
+						}
+						//check if metadata row has same datatype of input value
+						try {
+							if(!Class.forName(arr[2]).isInstance(htblColNameValue.get(arr[1]))) {
+								throw new DBAppException("Wrong datatype in column"+arr[1]+" !");
+							}
+						} catch (ClassNotFoundException e) {
+							e.printStackTrace();
+						}
+						countCorrectColumns++;
+					}
+				}
+				current=br.readLine();
+			}
+
+			br.close();
+			if(!(countCorrectColumns==htblColNameValue.size())) {
+				throw new DBAppException("Hashtable Columns are not in metadata!");
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return Primarykey+" "+PrimarykeyType;
+	}
+	
+	public String getPageAndIndex(String strTableName, Object primaryKeyValue, String primaryKeyColumn, String  primarykeyType) throws DBAppException {
+
+		Hashtable<String,Object>h1 = new Hashtable<>();
+		h1.put(primaryKeyColumn,primaryKeyValue);
+		String pageToDeleteFrom = binaryDeleteFromTable(strTableName,h1,primaryKeyColumn,primarykeyType);
+
+		if(!(pageToDeleteFrom.equals(""))){
+			Vector<Hashtable<String, Object>> pageVector = readPageIntoVector(pageToDeleteFrom);
+			int start = 0;
+			int end = pageVector.size() - 1;
+
+			//Binary Search to get the page
+			while (start <= end) {
+				int mid = (start + end) / 2;
+
+				int comparison = compare(primaryKeyValue,pageVector.get(mid).get(primaryKeyColumn), primarykeyType);
+				if (comparison == 0) {
+					return pageToDeleteFrom + " " + mid;
+				} else if (comparison > 0) {
+					start = mid + 1;
+				} else {
+					end = mid - 1;
+				}
+			}
+			throw new DBAppException("No row where this primary key exists!");
+		}else{
+			throw new DBAppException("No row where this primary key exists!");
+		}
+	}
+
 
 }

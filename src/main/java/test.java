@@ -25,7 +25,9 @@ public class test {
 		
 		DBApp dbApp=new DBApp();
 		
-		String tableName = "wawrrr";
+		//dbApp.updateTable("courses", null, null);
+		
+		//String tableName = "wawrrr";
 //
 //        Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
 //        htblColNameType.put("gpa", "java.lang.Double");
@@ -47,14 +49,14 @@ public class test {
 //
 //        dbApp.createTable(tableName, "gpa", htblColNameType, minValues, maxValues);
         
-        Hashtable<String, Object> nameValue = new Hashtable<>();
-        nameValue.put("gpa", 3.0);
-        nameValue.put("date_passed", new Date(1999,1,1));
-        nameValue.put("course_name", "AAA");
-        
-        
-        dbApp.insertIntoTable("wawa", nameValue);
-        
+//        Hashtable<String, Object> nameValue = new Hashtable<>();
+//        nameValue.put("gpa", 3.0);
+//        nameValue.put("date_passed", new Date(1999,1,1));
+//        nameValue.put("course_name", "AAA");
+//        
+//        
+//        dbApp.insertIntoTable("wawa", nameValue);
+//        
 		
 		
 //		System.out.println(getFileOverflowNumber("Employee[243](1423)"));
@@ -71,7 +73,8 @@ public class test {
 //		}
 		
 		
-//		DBApp dbApp = new DBApp();
+	//DBApp dbApp = new DBApp();
+	
 //		String tableName = "courses";
 //
 //        Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
@@ -96,6 +99,8 @@ public class test {
 //        dbApp.createTable(tableName, "course_id", htblColNameType, minValues, maxValues);
 		
 //        dbApp.init();
+//        
+//        dbApp.updateTable("wawa", tableName, null);
 //
 //        String table = "courses";
 //        Hashtable<String, Object> row = new Hashtable();
@@ -201,28 +206,28 @@ public class test {
 //
 //		Hashtable<String, Object> row12 = new Hashtable();
 //		row12.put("date_added", new Date(2011 - 1900, 4 - 1, 1));
-//		row12.put("course_id", 31);
-//		row12.put("course_name", "bar");
+//		row12.put("course_id", 1);
+//		row12.put("course_name", "amory");
 //		row12.put("hours", 13);
 //
 //		Hashtable<String, Object> row13 = new Hashtable();
 //		row13.put("date_added", new Date(2011 - 1900, 4 - 1, 1));
-//		row13.put("course_id", 34);
-//		row13.put("course_name", "bar");
+//		row13.put("course_id", 2);
+//		row13.put("course_name", "sherif");
 //		row13.put("hours", 13);
 //
 //
 //		Hashtable<String, Object> row14 = new Hashtable();
 //		row14.put("date_added", new Date(2011 - 1900, 4 - 1, 1));
-//		row14.put("course_id", 37);
-//		row14.put("course_name", "bar");
+//		row14.put("course_id", 3);
+//		row14.put("course_name", "bello");
 //		row14.put("hours", 13);
 //
 //
 //		Hashtable<String, Object> row15 = new Hashtable();
 //		row15.put("date_added", new Date(2011 - 1900, 4 - 1, 1));
-//		row15.put("course_id", 45);
-//		row15.put("course_name", "bar");
+//		row15.put("course_id", 4);
+//		row15.put("course_name", "sawi");
 //		row15.put("hours", 13);
 //
 ////
@@ -232,7 +237,12 @@ public class test {
 //		v4.add(row13);
 //		v4.add(row14);
 //		v4.add(row15);
-////
+//////
+		
+		
+	//	dbApp.createTable("courses",, null, null, null);
+		
+		
 //		try {
 //			FileOutputStream fileOut =
 //					new FileOutputStream("src\\main\\resources\\data\\"+"courses"+"[1](0)"+".class");
@@ -247,18 +257,42 @@ public class test {
 
 //
 //
-//		Vector<Hashtable<String,Object>> vx = ReadPageIntoVector("courses[3](0).class");
-//	      System.out.println(vx.toString());
+		Vector<Hashtable<String,Object>> vx = readPageIntoVector("courses[1](0).class");
+	      System.out.println(vx.toString());
+	      
+	      Hashtable<String, Object> row15 = new Hashtable();
+			row15.put("course_name", "gamed");
+
+	      
+	     
+	      dbApp.updateTable("courses", "1", row15);
+	      
+	      Vector<Hashtable<String,Object>> vx2 = readPageIntoVector("courses[1](0).class");
+	      System.out.println(vx2.toString());
+	      
 
 
 //		System.out.println(binarySearchOnPages("courses",1,"course_id",32,"java.lang.Integer"));
 		
-		String a = "abc";
-		String b = "ASS";
-
-		System.out.println(a.compareTo(b));
-////mmm
+//		String a = "abc";
+//		String b = "ASS";
+//
+//		System.out.println(a.compareTo(b));
+////
 ///
+        
+//        Hashtable<String,Integer> ht1=new Hashtable<>();
+//        ht1.put("Ahmed", 2);
+//        ht1.put("Mohamed", 3);
+//        System.out.println(ht1.toString());
+//        Hashtable<String,Integer> ht2=new Hashtable<>();
+//        ht2.put("Ahmed", 1);
+//        ht2.put("Mohamed", 1);
+//        
+//        ht1.putAll(ht2);
+//        
+//        System.out.println(ht1.toString());
+//        
 
 
 		//System.out.println(compare(10,20,"java.lang.Integer" ));
