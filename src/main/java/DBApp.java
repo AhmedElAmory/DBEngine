@@ -239,7 +239,7 @@ public class DBApp implements DBAppInterface {
 	}
 	
 	public void checkInsertInputConstraints(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
-		
+		//5 min 6 max
 		if(!checkTableExists(strTableName)) {
 			throw new DBAppException("Table does not exist!");
 		}
@@ -268,6 +268,15 @@ public class DBApp implements DBAppInterface {
 						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
 						}
+						
+						if(arr[2].equals("java.util.Date")) {
+						//4 if conditions for the 4 types ....
+							// try to type cast the min max values and make sure they can be type casted.....
+							//make sure also in create table 
+							//
+						
+						}
+						
 						countCorrectColumns++;
 					}
 				}
