@@ -208,9 +208,9 @@ public class DBApp implements DBAppInterface {
 		Set<String> keys = htblColNameType.keySet();
 		for(String key: keys) {
 			//Check if primary key exists
-			if(!htblColNameMax.contains(key)) {
+			if(!htblColNameMax.containsKey(key)) {
 				throw new DBAppException("Column "+key+" has no maximum value inserted");
-			}else if(!htblColNameMin.contains(key)) {
+			}else if(!htblColNameMin.containsKey(key)) {
 				throw new DBAppException("Column "+key+" has no minimum value inserted");
 			}
 			if(key.equals(strClusteringKeyColumn)) {
@@ -222,14 +222,44 @@ public class DBApp implements DBAppInterface {
 					dataType.equals("java.lang.Double")||
 					dataType.equals("java.util.Date"))) {
 				throw new DBAppException("Column "+key+" has an unsupported data type");
+			
+			}else if(dataType.equals("java.lang.Integer")) {
+				try {
+					Integer.parseInt(htblColNameMax.get(key));
+				}catch (Exception e) {
+					throw new DBAppException("Column "+key+" maximum value is not an integer");
+				}
+				try {
+					Integer.parseInt(htblColNameMin.get(key));
+				}catch (Exception e) {
+					throw new DBAppException("Column "+key+" minimum value is not an integer");
+				}
+			
+			}else if(dataType.equals("java.lang.Double")) {
+				try {
+					Double.parseDouble(htblColNameMax.get(key));
+				}catch (Exception e) {
+					throw new DBAppException("Column "+key+" maximum value is not a Double");
+				}
+				try {
+					Double.parseDouble(htblColNameMin.get(key));
+				}catch (Exception e) {
+					throw new DBAppException("Column "+key+" minimum value is not a Double");
+				}
+			
 			}else if(dataType.equals("java.util.Date")) {
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 				try {
-			          format.parse(htblColNameMax.get(key));
-			          format.parse(htblColNameMin.get(key));
+			        format.parse(htblColNameMax.get(key));
 			     }
 			     catch(ParseException e){
-			    	 throw new DBAppException("Column "+key+" has wrong date format, Make sure it's (YYYY-MM-DD)");
+			    	 throw new DBAppException("Column "+key+" maximum value has wrong date format, Make sure it's (YYYY-MM-DD)");
+			     }
+				try {
+					 format.parse(htblColNameMin.get(key));
+			     }
+			     catch(ParseException e){
+			    	 throw new DBAppException("Column "+key+" minimum value has wrong date format, Make sure it's (YYYY-MM-DD)");
 			     }
 			}
 		}
@@ -258,31 +288,67 @@ public class DBApp implements DBAppInterface {
 						//check if this is primary key
 						if(arr[3].equals("true")) {
 							primaryKeyFound=true;
-
 						}
 						//check if metadata row has same datatype of input value
 						try {
 							if(!Class.forName(arr[2]).isInstance(htblColNameValue.get(arr[1]))) {
-								throw new DBAppException("Wrong datatype in column"+arr[1]+" !");
+								throw new DBAppException("Wrong datatype in column "+arr[1]+" !");
 							}
 						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
 						}
 						
-						if(arr[2].equals("java.util.Date")) {
-						//4 if conditions for the 4 types ....
-							// try to type cast the min max values and make sure they can be type casted.....
-							//make sure also in create table 
-							//
-						
+						if(arr[2].equals("java.lang.Integer")) {
+							
+							int compareToMin=compare(htblColNameValue.get(arr[1]), Integer.parseInt(arr[5]), arr[2]);
+							int compareToMax=compare(htblColNameValue.get(arr[1]), Integer.parseInt(arr[6]), arr[2]);
+							
+							if (compareToMin<0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+							}
+							if (compareToMax>0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum");
+							}
+						}else if(arr[2].equals("java.lang.Double")) {
+							int compareToMin=compare(htblColNameValue.get(arr[1]), Double.parseDouble(arr[5]), arr[2]);
+							int compareToMax=compare(htblColNameValue.get(arr[1]), Double.parseDouble(arr[6]), arr[2]);
+							
+							if (compareToMin<0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+							}
+							if (compareToMax>0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum value");
+							}
+						}else if(arr[2].equals("java.util.Date")) {
+							String minDates[]=arr[5].split("-");
+							String maxDates[]=arr[6].split("-");
+							int compareToMin=compare(htblColNameValue.get(arr[1]), new Date(Integer.parseInt(minDates[0]), Integer.parseInt(minDates[1]), Integer.parseInt(minDates[2])), arr[2]);
+							int compareToMax=compare(htblColNameValue.get(arr[1]), new Date(Integer.parseInt(maxDates[0]), Integer.parseInt(maxDates[1]), Integer.parseInt(maxDates[2])), arr[2]);
+							
+							if (compareToMin<0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+							}
+							if (compareToMax>0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum value");
+							}
+						}else {
+							int compareToMin=compare(htblColNameValue.get(arr[1]), arr[5], arr[2]);
+							int compareToMax=compare(htblColNameValue.get(arr[1]), arr[6], arr[2]);
+							
+							if (compareToMin<0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+							}
+							if (compareToMax>0) {
+								throw new DBAppException("The value inserted in column "+arr[1]+" is above the maximum value");
+							}
 						}
+						
 						
 						countCorrectColumns++;
 					}
 				}
 				current=br.readLine();
 			}
-			
 			br.close();
 			if(!(countCorrectColumns==htblColNameValue.size())) {
 				throw new DBAppException("Hashtable Columns are not in metadata!");

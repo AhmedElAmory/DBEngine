@@ -1,9 +1,14 @@
 
-transcripts,gpa,java.lang.Double,true,false,0.7,5.0
-transcripts,date_passed,java.util.Date,false,false,1990-01-01,2020-12-31
-transcripts,course_name,java.lang.String,false,false,AAAAAA,zzzzzz
-transcripts,student_id,java.lang.String,false,false,43-0000,99-9999
-courses,hours,java.lang.Integer,false,false,1,24
-courses,date_added,java.util.Date,true,false,1990-01-01,2000-12-31
-courses,course_id,java.lang.String,false,false,100,2000
-courses,course_name,java.lang.String,false,false,AAAAAA,zzzzzz
+
+wawa,gpa,java.lang.Double,true,false,0.7,5.0
+wawa,date_passed,java.util.Date,false,false,1990-01-01,2020-12-31
+wawa,course_name,java.lang.String,false,false,AAAAAA,zzzzzz
+wawa,student_id,java.lang.String,false,false,43-0000,99-9999
+wawal,gpa,java.lang.Double,true,false,0.7,5.0
+wawal,date_passed,java.util.Date,false,false,1990-01-01,2020-12-31
+wawal,course_name,java.lang.String,false,false,AAAAAA,zzzzzz
+wawal,student_id,java.lang.String,false,false,43-0000,99-9999
+wawr,gpa,java.lang.Double,true,false,0.7,5.0
+wawr,date_passed,java.util.Date,false,false,1990-01-01,2020-12-31
+wawr,course_name,java.lang.String,false,false,AAAAAA,zzzzzz
+wawr,student_id,java.lang.String,false,false,43-0000,99-9999

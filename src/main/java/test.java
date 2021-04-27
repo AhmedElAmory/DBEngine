@@ -1,7 +1,10 @@
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.Vector;
 
 import org.junit.jupiter.api.Assertions;
@@ -22,27 +25,35 @@ public class test {
 		
 		DBApp dbApp=new DBApp();
 		
-		String tableName = "wawa";
-
-        Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
-        htblColNameType.put("gpa", "java.lang.Double");
-        htblColNameType.put("student_id", "java.lang.String");
-        htblColNameType.put("course_name", "java.lang.String");
-        htblColNameType.put("date_passed", "java.util.Date");
-
-        Hashtable<String, String> minValues = new Hashtable<>();
-        minValues.put("gpa", "0.7");
-        minValues.put("student_id", "43-0000");
-        minValues.put("course_name", "AAAAAA");
-        minValues.put("date_passed", "1990-01-01");
-
-        Hashtable<String, String> maxValues = new Hashtable<>();
-        maxValues.put("gpa", "5.0");
-        maxValues.put("student_id", "99-9999");
-        maxValues.put("course_name", "zzzzzz");
-        maxValues.put("date_passed", "2020-12-31");
-
-        dbApp.createTable(tableName, "gpa", htblColNameType, minValues, maxValues);
+		String tableName = "wawrrr";
+//
+//        Hashtable<String, String> htblColNameType = new Hashtable<String, String>();
+//        htblColNameType.put("gpa", "java.lang.Double");
+//        htblColNameType.put("student_id", "java.lang.String");
+//        htblColNameType.put("course_name", "java.lang.String");
+//        htblColNameType.put("date_passed", "java.util.Date");
+//
+//        Hashtable<String, String> minValues = new Hashtable<>();
+//        minValues.put("gpa", "0.7");
+//        minValues.put("student_id", "43-0000");
+//        minValues.put("course_name", "AAAAAA");
+//        minValues.put("date_passed", "1990-01-01");
+//
+//        Hashtable<String, String> maxValues = new Hashtable<>();
+//        maxValues.put("gpa", "5.0");
+//        maxValues.put("student_id", "99-9999");
+//        maxValues.put("course_name", "zzzzzz");
+//        maxValues.put("date_passed", "202012-31");
+//
+//        dbApp.createTable(tableName, "gpa", htblColNameType, minValues, maxValues);
+        
+        Hashtable<String, Object> nameValue = new Hashtable<>();
+        nameValue.put("gpa", 3.0);
+        nameValue.put("date_passed", new Date(1999,1,1));
+        nameValue.put("course_name", "AAA");
+        
+        
+        dbApp.insertIntoTable("wawa", nameValue);
         
 		
 		
@@ -166,9 +177,6 @@ public class test {
 //		row11.put("course_name", "bar");
 //		row11.put("hours", 13);
 //
-//
-//
-//
 //		Vector<Hashtable<String,Object>> v1 = new Vector<>();
 //
 //		v1.add(row);
@@ -227,12 +235,12 @@ public class test {
 ////
 //		try {
 //			FileOutputStream fileOut =
-//					new FileOutputStream("src\\main\\resources\\data\\"+"courses"+"[3](0)"+".class");
+//					new FileOutputStream("src\\main\\resources\\data\\"+"courses"+"[1](0)"+".class");
 //			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 //			out.writeObject(v4);
 //			out.close();
 //			fileOut.close();
-//			System.out.println("src\\main\\resources\\data\\"+"courses"+"[3](0)"+".class");
+//			System.out.println("src\\main\\resources\\data\\"+"courses"+"[1](0)"+".class");
 //		} catch (IOException i) {
 //			i.printStackTrace();
 //		}
@@ -243,17 +251,14 @@ public class test {
 //	      System.out.println(vx.toString());
 
 
-//		System.out.println(binarySearchOnPages("courses",3,"course_id",32,"java.lang.Integer"));
+//		System.out.println(binarySearchOnPages("courses",1,"course_id",32,"java.lang.Integer"));
 		
-		Date x= new Date();
-		
+		String a = "abc";
+		String b = "ASS";
 
-//		String a = "abc";
-//		String b = "ASS";
-//
-//		System.out.println(a.compareTo(b));
-//
-
+		System.out.println(a.compareTo(b));
+////mmm
+///
 
 
 		//System.out.println(compare(10,20,"java.lang.Integer" ));
@@ -261,12 +266,164 @@ public class test {
 
 	}
 
-
-
+	public boolean checkTableExists(String tableName)  {
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			while (current != null) {
+				String arr[]=current.split(",");
+				if(arr[0].equals(tableName)) {
+					return true;
+				}
+				current=br.readLine();
+			}
+			
+			br.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
 	
+	public void checkCreateTableExceptions(String strTableName,String strClusteringKeyColumn
+			,Hashtable<String, String> htblColNameType,Hashtable<String, String> htblColNameMin
+			,Hashtable<String, String> htblColNameMax) throws DBAppException {
+		//check if table already exists
+		if(checkTableExists(strTableName)) {
+			throw new DBAppException("Table already exists!");
+		}
+		//check inserted dataTypes
+		checkDataTypeAndPrimaryExists(htblColNameType,strClusteringKeyColumn,htblColNameMin,htblColNameMax);
+	}
 	
-
-
+	public void checkDataTypeAndPrimaryExists(Hashtable<String, String> htblColNameType,String strClusteringKeyColumn
+			,Hashtable<String, String> htblColNameMin
+			,Hashtable<String, String> htblColNameMax) throws DBAppException {
+		
+		if(htblColNameType.size()!=htblColNameMin.size()&&htblColNameType.size()!=htblColNameMax.size()) {
+			throw new DBAppException("The inserted hashtables are not of same size");
+		}
+		
+		boolean clusterFound=false;
+		Set<String> keys = htblColNameType.keySet();
+		for(String key: keys) {
+			//Check if primary key exists
+			if(!htblColNameMax.containsKey(key)) {
+				throw new DBAppException("Column "+key+" has no maximum value inserted");
+			}else if(!htblColNameMin.containsKey(key)) {
+				throw new DBAppException("Column "+key+" has no minimum value inserted");
+			}
+			if(key.equals(strClusteringKeyColumn)) {
+				clusterFound=true;
+			}
+			String dataType=htblColNameType.get(key);
+			if(!(dataType.equals("java.lang.Integer")||
+					dataType.equals("java.lang.String")||
+					dataType.equals("java.lang.Double")||
+					dataType.equals("java.util.Date"))) {
+				throw new DBAppException("Column "+key+" has an unsupported data type");
+			
+			}else if(dataType.equals("java.lang.Integer")) {
+				try {
+					Integer.parseInt(htblColNameMax.get(key));
+				}catch (Exception e) {
+					throw new DBAppException("Column "+key+" maximum value is not an integer");
+				}
+				try {
+					Integer.parseInt(htblColNameMin.get(key));
+				}catch (Exception e) {
+					throw new DBAppException("Column "+key+" minimum value is not an integer");
+				}
+			
+			}else if(dataType.equals("java.lang.Double")) {
+				try {
+					Double.parseDouble(htblColNameMax.get(key));
+				}catch (Exception e) {
+					throw new DBAppException("Column "+key+" maximum value is not a Double");
+				}
+				try {
+					Double.parseDouble(htblColNameMin.get(key));
+				}catch (Exception e) {
+					throw new DBAppException("Column "+key+" minimum value is not a Double");
+				}
+			
+			}else if(dataType.equals("java.util.Date")) {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+				try {
+			        format.parse(htblColNameMax.get(key));
+			     }
+			     catch(ParseException e){
+			    	 throw new DBAppException("Column "+key+" maximum value has wrong date format, Make sure it's (YYYY-MM-DD)");
+			     }
+				try {
+					 format.parse(htblColNameMin.get(key));
+			     }
+			     catch(ParseException e){
+			    	 throw new DBAppException("Column "+key+" minimum value has wrong date format, Make sure it's (YYYY-MM-DD)");
+			     }
+			}
+		}
+		if(!clusterFound) {
+			throw new DBAppException("Primary key not found!");
+		}
+	}
+	
+	public void checkInsertInputConstraints(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
+		//5 min 6 max
+		if(!checkTableExists(strTableName)) {
+			throw new DBAppException("Table does not exist!");
+		}
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			// check if column names in hashtable exist in metadata
+			int countCorrectColumns=0;
+			boolean primaryKeyFound=false;
+			while(current!=null) {
+				String arr[]=current.split(",");
+				//check if metadata row has same table name as input
+				if(arr[0].equals(strTableName)) {
+					//check if hashtable contains same column name as metadata
+					if(htblColNameValue.containsKey(arr[1])) {
+						//check if this is primary key
+						if(arr[3].equals("true")) {
+							primaryKeyFound=true;
+						}
+						//check if metadata row has same datatype of input value
+						try {
+							if(!Class.forName(arr[2]).isInstance(htblColNameValue.get(arr[1]))) {
+								throw new DBAppException("Wrong datatype in column"+arr[1]+" !");
+							}
+						} catch (ClassNotFoundException e) {
+							e.printStackTrace();
+						}
+						
+						int compareToMin=compare(htblColNameValue.get(arr[1]), arr[5], arr[2]);
+						int compareToMax=compare(htblColNameValue.get(arr[1]), arr[6], arr[2]);
+						
+						if (compareToMin<0) {
+							throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+						}
+						if (compareToMax>0) {
+							throw new DBAppException("The value inserted in column "+arr[1]+" is below the minimum value");
+						}
+						countCorrectColumns++;
+					}
+				}
+				current=br.readLine();
+			}
+			br.close();
+			if(!(countCorrectColumns==htblColNameValue.size())) {
+				throw new DBAppException("Hashtable Columns are not in metadata!");
+			}
+			if(!primaryKeyFound) {
+				throw new DBAppException("Primary key not inserted!");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static String getFileTableName(String fileName) {
 		String tableName="";
 		int c=0;
@@ -275,9 +432,8 @@ public class test {
 			c++;
 		}
 		return tableName;
-
 	}
-
+	
 	public static int getFilePageNumber(String fileName) {
 		String pageNumber="";
 		int c=0;
@@ -289,10 +445,9 @@ public class test {
 			pageNumber+=fileName.charAt(c);
 			c++;
 		}
-
 		return Integer.parseInt(pageNumber);
 	}
-
+	
 	public static int getFileOverflowNumber(String fileName) {
 		String overflowNumber="";
 		int c=0;
@@ -304,39 +459,233 @@ public class test {
 			overflowNumber+=fileName.charAt(c);
 			c++;
 		}
-
 		return Integer.parseInt(overflowNumber);
 	}
 
-	public static int compare(Object obj1, Object obj2, String primarykeyType){
+	public static String binarySearchOnPages(String tableName, int totalNumberOfPages, 
+			String primaryKey, Object primaryKeyValue, String primaryKeyType) throws DBAppException {
+		int start = 1;
+		int end = totalNumberOfPages;
 
-		if(primarykeyType.equals("java.lang.Double")){
-			if(((double)obj1)>((double)obj2))
-				return 1;
-			else if(((double)obj1)<((double)obj2))
-				return -1;
-			else
-				return 0;
+		//checking if the value of the input is less than 
+		//the minimum value in the table and returning the first page
+		Vector<Hashtable<String,Object>> firstPage = readPageIntoVector(tableName+"[1](0).class");
+		Object firstPageMin = firstPage.get(0).get(primaryKey);
+		int compareWithFirstPageMin = compare(primaryKeyValue,firstPageMin,primaryKeyType);
+		if(compareWithFirstPageMin<0){
+			return tableName + "[1](0).class";
 		}
-		else if(primarykeyType.equals("java.lang.Integer")){
-			if(((int)obj1)>((int)obj2))
-				return 1;
-			else if(((int)obj1)<((int)obj2))
-				return -1;
-			else
-				return 0;
+
+		//Binary Search to get the page
+		while (start<=end){
+			int mid = (start + end)/2;
+			Vector<Hashtable<String,Object>> currentPage = readPageIntoVector(tableName + "[" + mid + "](0).class");
+			Object maxValue = null;
+			
+			//Getting the minimum value of the page
+			Object minValue = currentPage.get(0).get(primaryKey);
+			
+			//Getting the number of overflow pages of this page
+			int numberOfOverFlows = countNumberOfPageOverflows(tableName,mid);
+			
+			//If the numberOfOverFlows is zero then the maximum value is the maximum of current page
+			if (numberOfOverFlows==0){
+				maxValue = currentPage.get(currentPage.size()-1).get(primaryKey);
+			}else{
+				//if it's not 0 then we get the maximum value from the last overflow page
+				Vector<Hashtable<String,Object>> lastOverflowPage = readPageIntoVector(tableName + "[" + mid + "](" + numberOfOverFlows + ").class");
+				maxValue= lastOverflowPage.get(lastOverflowPage.size()-1).get(primaryKey);
+			}
+			// we compare the primary value to the minimum value
+			int compareToMinValue = compare(primaryKeyValue,minValue,primaryKeyType);
+			if(compareToMinValue==0){
+				throw new DBAppException("The primary key already exists!");
+			}
+			else if(compareToMinValue<0){
+				//if it is less than the minimum value then we take the part before the current/middle page
+				end = mid-1;
+			}
+			else if(compareToMinValue>0){
+				//else if it is greater than the minimum
+				// compare the primary value to the max value
+				int compareToMaxValue = compare(primaryKeyValue,maxValue,primaryKeyType);
+				if(compareToMaxValue==0){
+					throw new DBAppException("The primary key already exists!");
+				}
+				else if(compareToMaxValue>0){
+					//If it is grater than the maximum value then we have two cases
+					
+					//First Case:
+					//if it is less than the minimum of the next page then we know it has to
+					//be inserted in the last overflow of the current page(if exists)
+					int next = mid +1;
+					//if we are not already on the last page
+					if(next<=totalNumberOfPages) {
+						Vector<Hashtable<String, Object>> nextPage = readPageIntoVector(tableName + "[" + next + "](0).class");
+						Object minofnextpage = nextPage.get(0).get(primaryKey);
+						int compareToMinOfNextPage = compare(primaryKeyValue, minofnextpage, primaryKeyType);
+						if (compareToMinOfNextPage < 0) {
+							// it must be inserted at the end of the last overflow of this page
+							return tableName + "[" + mid + "](" + numberOfOverFlows + ").class";
+						} else if (compareToMinOfNextPage == 0) {
+							//if it is equal to the minimum of the next page then we found it
+							throw new DBAppException("The primary key already exists!");
+						} else {
+							// or if its is not then we take the first half of the pages
+							start = mid + 1;
+						}
+					}else{ 
+						// if we are already on the last page(no next page) and the key is greater than the maximum
+						// return last overflow of the current page which is the last page
+						return tableName + "[" + mid + "](" + numberOfOverFlows + ").class";
+					}
+				}else if(compareToMaxValue<0){
+					//if the primary value is less than the maximum then its in this page or one of its overflows	
+					//if there is no overflows we return this page
+					if(numberOfOverFlows==0){
+						return tableName + "[" + mid + "](0).class";
+					}else {
+						// else we binary search on the page and its overflows to find the correct page
+						String overFlowResult = binarySearchOnOverflowPages(tableName, numberOfOverFlows,
+								primaryKey, primaryKeyValue, primaryKeyType, mid);
+						return overFlowResult;
+					}
+				}
+			}
 		}
-		else if(primarykeyType.equals("java.util.Date")){
-			return 	((Date)obj1).compareTo((Date)obj2);
-		}
-		else if(primarykeyType.equals("java.lang.String")){
-			return ((String)obj1).compareTo((String)obj2);
-		}
-		return -100;
+
+		return "";
 	}
 
-	public static Vector<Hashtable<String,Object>> ReadPageIntoVector(String pageName){
+	//searching for the overflow page needed to store the new input
+		public static String binarySearchOnOverflowPages(String tableName, int totalNumberOfOverflowPages, String primaryKey,
+														 Object primaryKeyValue, String primaryKeyType, int page) throws DBAppException{
+			int start = 0;
+			int end = totalNumberOfOverflowPages;
+			while (start<=end) {
+				int mid = (start + end) / 2;
+				//here after getting the middle page of the overflow pages of this specific page we get its path
+				//getting this over flow page to check if its in the range of this overflow page
+				Vector<Hashtable<String,Object>> currentPage = readPageIntoVector(tableName + "[" + page + "](" + mid + ").class");
 
+				//max value of this overflow page
+				Object maxValue = currentPage.get(currentPage.size()-1).get(primaryKey);
+				//min value of this overflow page
+				Object minValue = currentPage.get(0).get(primaryKey);
+
+				//comparing the primary key value to the minimum value
+				int compareToMinValue = compare(primaryKeyValue,minValue,primaryKeyType);
+				if(compareToMinValue==0){
+					throw new DBAppException("Primary key already exists!");
+				}
+				//if the primary value < minimum value we take the half before the mid
+				else if(compareToMinValue<0){
+					end=mid-1;
+				}else{
+					// else we compare it to the max value
+					int compareToMaxValue = compare(primaryKeyValue,maxValue,primaryKeyType);
+					if(compareToMaxValue==0){
+						throw new DBAppException("Primary key already exists!");
+					}
+					// if it is less than the maximum value then its in in this over flow page
+					else if(compareToMaxValue<0){
+						return tableName + "[" + page + "](" + mid + ").class";
+					}
+					//if it is greater than the max val then we have two cases
+					else{
+						//if it is less than the min of the next page 
+						//then it has to be inserted in this current page
+						int next = mid +1;
+						if(next<=totalNumberOfOverflowPages) { //if we are not in the last page
+							Vector<Hashtable<String, Object>> nextPage = readPageIntoVector(tableName + "[" + page + "](" + mid + ").class");
+							Object minOfNextPage = nextPage.get(0).get(primaryKey);
+							int compareToMinOfNextPage = compare(primaryKeyValue, minOfNextPage, primaryKeyType);
+							if(compareToMinOfNextPage<0){
+								//insert in the this page
+								return tableName + "["+page+"]("+mid+").class";
+							}else if(compareToMinOfNextPage==0){
+								throw new DBAppException("The primary key already exists!");
+							}else{
+								// if it is not less than the minimum of the next page then we continue binary search
+								start = mid + 1;
+							}
+						}else {
+							//if we are already in the last page and the key is greater than its maximum then it should
+							//be inserted in this last page
+							return  tableName+ "["+page+"]("+mid+").class";
+						}
+					}
+				}
+			}
+			return "";
+		}
+		
+		// comparing objects
+		public static int compare(Object obj1, Object obj2, String primaryKeyType){
+
+			if(primaryKeyType.equals("java.lang.Double")){
+				if(((double)obj1)>((double)obj2))
+					return 1;
+				else if(((double)obj1)<((double)obj2))
+					return -1;
+				else
+					return 0;
+			}
+			else if(primaryKeyType.equals("java.lang.Integer")){
+				if(((int)obj1)>((int)obj2))
+					return 1;
+				else if(((int)obj1)<((int)obj2))
+					return -1;
+				else
+					return 0;
+			}
+			else if(primaryKeyType.equals("java.util.Date")){
+				return 	((Date)obj1).compareTo((Date)obj2);
+			}
+			else if(primaryKeyType.equals("java.lang.String")){
+				return ((String)obj1).compareTo((String)obj2);
+			}
+			return -100;
+		}	
+
+	//count the pages for a specific table
+	public int countNumberOfPagesWithoutOverflows(String Tablename){
+		File dir = new File("src\\main\\resources\\data");
+		File[] directoryListing = dir.listFiles();
+		int counter =0;
+		if (directoryListing != null) {
+			for (File page : directoryListing) {
+				String tableName=getFileTableName(page.getName());
+				int overflowno = getFileOverflowNumber(page.getName());
+				if(tableName.equals(Tablename) && overflowno==0) {
+					counter++;
+				}
+				}
+			}
+		return counter;
+	}
+
+	//count the overflow pages for a specific page
+	public static int countNumberOfPageOverflows(String Tablename, int Number){
+
+		File dir = new File("src\\main\\resources\\data");
+		File[] directoryListing = dir.listFiles();
+		int counter =0;
+		if (directoryListing != null) {
+			for (File page : directoryListing) {
+				String tableName=getFileTableName(page.getName());
+				int overflowNumber = getFileOverflowNumber(page.getName());
+				int pageNumber = getFilePageNumber(page.getName());
+
+				if(tableName.equals(Tablename) && pageNumber==Number && overflowNumber!=0) {
+					counter++;
+				}
+			}
+		}
+		return counter;
+	}
+	
+	public static Vector<Hashtable<String,Object>> readPageIntoVector(String pageName){
 		String path = "src\\main\\resources\\data\\" + pageName;
 		Vector<Hashtable<String,Object>> v = null;
 		try {
@@ -352,212 +701,6 @@ public class test {
 		}
 
 		return  v;
-	}
-
-
-	//searching for the overflow page needed to store the new input
-	public static String binarySearchOnOverflowPages(String TableName, int TotalNumberOfOverflowPages, String PrimaryKey,
-													 Object PrimaryKeyValue, String primarykeyType, int page) throws DBAppException{
-		int startvalue = 0;
-		int endvalue = TotalNumberOfOverflowPages;
-		int mid;
-		while (startvalue<=endvalue) {
-
-			mid = (startvalue + endvalue) / 2;
-			//here after getting the middle page of the overflow pagesof this specific page we get its path
-			//getting the this over flow page to check if its in the range of this overflow page
-			Vector<Hashtable<String,Object>> v = ReadPageIntoVector(TableName + "[" + page + "](" + mid + ").class");
-
-			//max val of this overflow page
-			Object maxValue = v.get(v.size()-1).get(PrimaryKey);
-			//min val of this overflow page
-			Object minValue = v.get(0).get(PrimaryKey);
-
-			//comparing the primary key value to the min value
-			int comp = compare(PrimaryKeyValue,minValue,primarykeyType);
-			if(comp==0){
-				throw new DBAppException("Primary key already exists!");
-			}
-			//if the primary value <min val we take the half before the mid
-			else if(comp<0){
-				endvalue=mid-1;
-			}else{
-
-				// else we compare it to the max val
-				int comp2 = compare(PrimaryKeyValue,maxValue,primarykeyType);
-				if(comp2==0){
-					throw new DBAppException("Primary key already exists!");
-				}
-				// if it is less than the max val then its in in this over flow page
-				else if(comp2<0){
-					return TableName + "[" + page + "](" + mid + ").class";
-				}
-				//if it is greater than the max val then we have two cases
-				else{
-					//if it is less than the min of the next page then it has to be inserted in this current page
-					int temp = mid +1;
-					if(temp<=TotalNumberOfOverflowPages) { //if we are not in the last page
-						Vector<Hashtable<String, Object>> v5 = ReadPageIntoVector(TableName + "[" + page + "](" + mid + ").class");
-						Object minofnextpage = v5.get(0).get(PrimaryKey);
-						int comp5 = compare(PrimaryKeyValue, minofnextpage, primarykeyType);
-						if(comp5<0){
-							//insert in the next page
-							return TableName + "["+page+"]("+temp+").class";
-						}else if(comp5==0){
-							throw new DBAppException("The primary key already exists!");
-						}else{
-							// if it is not less than the min of the next page then we continue binary search
-							startvalue = mid + 1;
-						}
-
-					}else {
-						//if we are already in the last page and the key is greater than its maximum then it should
-						//be inserted in this last page
-						return  TableName+ "["+page+"]("+mid+").class";
-					}
-				}
-			}
-		}
-		return "";
-	}
-
-
-
-	public static String binarySearchOnPages(String TableName, int TotalNumberOfPages, String PrimaryKey, Object PrimaryKeyValue, String primarykeyType) throws DBAppException {
-
-		int startvalue = 1;
-		int endvalue = TotalNumberOfPages;
-		int mid;
-
-		//checking if the value of the input less than the min val in the table and returning the first page
-		Vector<Hashtable<String,Object>> v3 = ReadPageIntoVector(TableName+"[1](0).class");
-
-		Object minValue3 = v3.get(0).get(PrimaryKey);
-		int comp3 = compare(PrimaryKeyValue,minValue3,primarykeyType);
-		if(comp3<0){
-			return TableName + "[1](0).class";
-		}
-
-		// binary search for the page
-
-		while (startvalue<=endvalue){
-
-			mid = (startvalue + endvalue)/2;
-
-			Vector<Hashtable<String,Object>> v = ReadPageIntoVector(TableName + "[" + mid + "](0).class");
-
-			Object maxValue = null;
-			// getting the min val of the page
-			Object minValue = v.get(0).get(PrimaryKey);
-
-			//getting the number of overflow pages of this page
-			int numberofoverflows = countNumberOfPagesWithOverflow(TableName,mid);
-
-			//if its a zero then it does not have overflows then its max is in this page in the end
-			if (numberofoverflows==0){
-				maxValue = v.get(v.size()-1).get(PrimaryKey);
-			}else{
-				//else we get the last overflow page and get its last value to be the max val
-				Vector<Hashtable<String,Object>> v2 = ReadPageIntoVector(TableName + "[" + mid + "](" + numberofoverflows + ").class");
-
-				maxValue= v2.get(v2.size()-1).get(PrimaryKey);
-			}
-			// we compare  the primary val to the min val
-			int comp = compare(PrimaryKeyValue,minValue,primarykeyType);
-			if(comp==0){
-				throw new DBAppException("The primary key already exists!");
-			}
-			//if it is less than the min val then we take the part before the mid val
-			else if(comp<0){
-				endvalue = mid-1;
-			}
-			//else if it is greater than the min
-			else{
-				// compare the primary val to the max val
-				int comp2 = compare(PrimaryKeyValue,maxValue,primarykeyType);
-				if(comp2==0){
-					throw new DBAppException("The primary key already exists!");
-				}
-				//if it is grater than the max val then we have two cases
-				else if(comp2>0){
-
-					//if it is less than the minimum of the next page then we know it has to
-					// be inserted in the last overflow of the current page
-					int temp = mid +1;
-
-					//if we are not already on the last page
-					if(temp<=TotalNumberOfPages) {
-						Vector<Hashtable<String, Object>> v5 = ReadPageIntoVector(TableName + "[" + temp + "](0).class");
-						Object minofnextpage = v5.get(0).get(PrimaryKey);
-						int comp5 = compare(PrimaryKeyValue, minofnextpage, primarykeyType);
-						if (comp5 < 0) {
-							// it must be inserted at the end of the last overflow of this page
-							return TableName + "[" + mid + "](" + numberofoverflows + ").class";
-						} else if (comp5 == 0) {
-							//if it is equal to the minimum of the next page then we found it
-							throw new DBAppException("The primary key already exists!");
-						} else {
-							// or if its is not then we take the first half of the pages
-							startvalue = mid + 1;
-						}
-					}else{ // if we are already on the last page(no next page) and the key is greater than the maximum
-						// return last overflow of the current page which is the last page
-						return TableName + "[" + mid + "](" + numberofoverflows + ").class";
-					}
-
-				}//if the primary val less than the max then its in this page mid or one of its over flow
-				else{
-					//if there is no overflows we return this page
-					if(numberofoverflows==0){
-						return TableName + "[" + mid + "](0).class";
-					}// else we binary search on the page and its overflows to find its correct page
-					else {
-						String overflowres = binarySearchOnOverflowPages(TableName, numberofoverflows,
-								PrimaryKey, PrimaryKeyValue, primarykeyType, mid);
-						return overflowres;
-					}
-				}
-			}
-		}
-
-		return "";
-	}
-
-
-	public int countNumberOfPagesWithoutOverflow(String Tablename){
-
-		File dir = new File("src\\main\\resources\\data");
-		File[] directoryListing = dir.listFiles();
-		int counter =0;
-		if (directoryListing != null) {
-			for (File page : directoryListing) {
-				String tableName=getFileTableName(page.getName());
-				int overflowno = getFileOverflowNumber(page.getName());
-				if(tableName.equals(Tablename) && overflowno==0) {
-					counter++;
-				}
-			}
-		}
-		return counter;
-	}
-
-	public static int countNumberOfPagesWithOverflow(String Tablename, int Number){
-
-		File dir = new File("src\\main\\resources\\data");
-		File[] directoryListing = dir.listFiles();
-		int counter =0;
-		if (directoryListing != null) {
-			for (File page : directoryListing) {
-				String tableName=getFileTableName(page.getName());
-				int overflowno = getFileOverflowNumber(page.getName());
-				int pageNumber = getFilePageNumber(page.getName());
-
-				if(tableName.equals(Tablename) && pageNumber==Number && overflowno!=0) {
-					counter++;
-				}
-			}
-		}
-		return counter;
 	}
 
 
