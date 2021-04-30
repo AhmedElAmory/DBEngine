@@ -9,7 +9,6 @@ import java.util.*;
 //497
 
 public class DBApp implements DBAppInterface {
-	int counter=0;
 	// Constructor
 	public DBApp() {
 		init();
@@ -68,7 +67,6 @@ public class DBApp implements DBAppInterface {
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
 	public void insertIntoTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
-		System.out.println(counter++);
 		// check if columns in hashtable exist in metadata and are of correct datatypes
 //////////check date-time input constraintss///////////////////////////////////////////////////////////
 //////////make sure of min max constraints and size and that they are the same as name-type hashtable
@@ -186,6 +184,8 @@ public class DBApp implements DBAppInterface {
 
 			String location = getPageAndIndex(strTableName, clusteringKeyValue, clusteringKeyColumnName,
 					clusteringKeyType);
+			
+			if(!location.equals("")) {
 
 			String locations[] = location.split(" ");
 			String pageFileName = locations[0];
@@ -205,6 +205,7 @@ public class DBApp implements DBAppInterface {
 				e.printStackTrace();
 			}
 
+			}
 			// call method with tableName,ClusteringKey name,Clustering key value,
 			// Clustering key type,and hashtable
 		} catch (IOException e) {
@@ -1069,10 +1070,8 @@ public class DBApp implements DBAppInterface {
 		Object primaryKeyValue = htblColNameValue.get(primaryKeyColumn);
 		int start = 1;
 		int end = totalNumberOfPages;
-		System.out.println(start+"    "+end);
 		// Binary Search to get the page
 		while (start <= end) {
-
 			int mid = (start + end) / 2;
 			Vector<Hashtable<String, Object>> currentPage = readPageIntoVector(tableName + "[" + mid + "](0).class");
 			Object maxValue = null;
@@ -1210,9 +1209,12 @@ public class DBApp implements DBAppInterface {
 				}
 			}
 			throw new DBAppException("No row where this primary key exists!");
-		} else {
-			throw new DBAppException("No row where this primary key exists!");
-		}
+		} 
+//		else {
+//			throw new DBAppException("No row where this primary key exists!");
+//		}
+		return "";
+		
 	}
 
 	public void binarySearchAndInsertInPages(String primaryKey, String tableName, int pageNumber, int overflowNumber,
