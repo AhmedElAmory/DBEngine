@@ -6,7 +6,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 //602
-
+//497
 
 public class DBApp implements DBAppInterface {
 	int counter=0;
@@ -494,14 +494,14 @@ public class DBApp implements DBAppInterface {
 											Integer.parseInt(maxDates[2])),
 									arr[2]);
 
-							if (compareToMin < 0) {
-								throw new DBAppException(
-										"The value inserted in column " + arr[1] + " is below the minimum value");
-							}
-							if (compareToMax > 0) {
-								throw new DBAppException(
-										"The value inserted in column " + arr[1] + " is above the maximum value");
-							}
+//							if (compareToMin < 0) {
+//								throw new DBAppException(
+//										"The value inserted in column " + arr[1] + " is below the minimum value");
+//							}
+//							if (compareToMax > 0) {
+//								throw new DBAppException(
+//										"The value inserted in column " + arr[1] + " is above the maximum value");
+//							}
 						} else {
 							int compareToMin = compare(htblColNameValue.get(arr[1]), arr[5], arr[2]);
 							int compareToMax = compare(htblColNameValue.get(arr[1]), arr[6], arr[2]);
@@ -1069,7 +1069,7 @@ public class DBApp implements DBAppInterface {
 		Object primaryKeyValue = htblColNameValue.get(primaryKeyColumn);
 		int start = 1;
 		int end = totalNumberOfPages;
-
+		System.out.println(start+"    "+end);
 		// Binary Search to get the page
 		while (start <= end) {
 

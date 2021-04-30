@@ -297,7 +297,11 @@ public class test {
 
 		//System.out.println(compare(10,20,"java.lang.Integer" ));
 		
-		System.out.println(readPageIntoVector("students[1](0).class"));
+		int c=0;
+		while(c!=1000000) {
+			System.out.println(c);
+			c++;
+		}
 
 	}
 
