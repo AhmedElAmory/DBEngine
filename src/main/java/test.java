@@ -23,7 +23,7 @@ public class test {
 //			e.printStackTrace();
 //		}
 		
-		DBApp dbApp=new DBApp();
+//		DBApp dbApp=new DBApp();
 		
 		//dbApp.updateTable("courses", null, null);
 		
@@ -257,19 +257,19 @@ public class test {
 
 //
 //
-		Vector<Hashtable<String,Object>> vx = readPageIntoVector("courses[1](0).class");
-	      System.out.println(vx.toString());
-	      
-	      Hashtable<String, Object> row15 = new Hashtable();
-			row15.put("course_name", "gamed");
-
-	      
-	     
-	      dbApp.updateTable("courses", "1", row15);
-	      
-	      Vector<Hashtable<String,Object>> vx2 = readPageIntoVector("courses[1](0).class");
-	      System.out.println(vx2.toString());
-	      
+//		Vector<Hashtable<String,Object>> vx = readPageIntoVector("courses[1](0).class");
+//	      System.out.println(vx.toString());
+//	      
+//	      Hashtable<String, Object> row15 = new Hashtable();
+//			row15.put("course_name", "gamed");
+//
+//	      
+//	     
+//	      dbApp.updateTable("courses", "1", row15);
+//	      
+//	      Vector<Hashtable<String,Object>> vx2 = readPageIntoVector("courses[1](0).class");
+//	      System.out.println(vx2.toString());
+//	      
 
 
 //		System.out.println(binarySearchOnPages("courses",1,"course_id",32,"java.lang.Integer"));
@@ -296,7 +296,8 @@ public class test {
 
 
 		//System.out.println(compare(10,20,"java.lang.Integer" ));
-
+		
+		System.out.println(readPageIntoVector("students[1](0).class"));
 
 	}
 
