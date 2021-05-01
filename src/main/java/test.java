@@ -302,7 +302,11 @@ public class test {
 			System.out.println(c);
 			c++;
 		}
-
+		
+		Date x= new Date (1999-12-12);
+		Date y= new Date (2002-12-12);
+		
+		compare(x,y,"java.util.Date");
 	}
 
 	public boolean checkTableExists(String tableName)  {

@@ -9,6 +9,7 @@ import java.util.*;
 //497
 
 public class DBApp implements DBAppInterface {
+	int counter=0;
 	// Constructor
 	public DBApp() {
 		init();
@@ -70,6 +71,8 @@ public class DBApp implements DBAppInterface {
 		// check if columns in hashtable exist in metadata and are of correct datatypes
 //////////check date-time input constraintss///////////////////////////////////////////////////////////
 //////////make sure of min max constraints and size and that they are the same as name-type hashtable
+		
+		System.out.println(counter++);
 		checkInsertConstraints(strTableName, htblColNameValue);
 
 		File dir = new File("src\\main\\resources\\data");
@@ -1002,10 +1005,7 @@ public class DBApp implements DBAppInterface {
 						File f1 = new File(
 								"src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + j + ").class"); // file
 																													// to
-																													// be
-																													// deleted
 						f1.delete();
-
 						// Decrement all overflow pages with overflow number > j
 						for (int x = j + 1; x <= TotalNumberOfOverflowPages; x++) {
 							File f2 = new File(
@@ -1280,34 +1280,26 @@ public class DBApp implements DBAppInterface {
 				//if condition to check if current page has overflows, if so we check them, else check next page
 				if (overflowPageCount == 0) {
 					//if condition to check if this is the last page, if so create a new page
-					if (nonOverflowPageCount == pageNumber) {
-						String newPagePath = tableName + "[" + (pageNumber + 1) + "](" + 0 + ").class";
-						Vector<Hashtable<String, Object>> newPage = new Vector();
-						writeVectorIntoPage(newPagePath, newPage);
-					}
-					//set the next page path and vector
 					String nextPagePath = tableName + "[" + (pageNumber + 1) + "](" + 0 + ").class";
-					Vector<Hashtable<String, Object>> nextPage = readPageIntoVector(nextPagePath);
-
+					Vector<Hashtable<String, Object>> nextPage = new Vector();
+					if (nonOverflowPageCount != pageNumber) {
+						nextPage = readPageIntoVector(nextPagePath);
+					}
 					//if condition to check if next page is full, if full create an overflow page
 					if (maxRowsInPage == nextPage.size()) {
-						Vector<Hashtable<String, Object>> newPage = new Vector();
-						newPage.add(currentPage.get(currentPage.size() - 1));
-						currentPage.remove(currentPage.size() - 1);
-						String newPagePath = tableName + "[" + pageNumber + "](" + (overflowPageCount + 1) + ").class";
-						writeVectorIntoPage(newPagePath, newPage);
+						Vector<Hashtable<String, Object>> newOverflowPage = new Vector();
+						newOverflowPage.add(currentPage.remove(currentPage.size() - 1));
+						String newOverflowPagePath = tableName + "[" + pageNumber + "](" + (1) + ").class";
+						writeVectorIntoPage(newOverflowPagePath, newOverflowPage);
 						writeVectorIntoPage(currentPagePath, currentPage);
-					}
 					//in the else, page is not full, so we insert in the next page
-					else {
-						nextPage.insertElementAt(currentPage.get(currentPage.size() - 1), 0);
+					}else {
+						nextPage.insertElementAt(currentPage.remove(currentPage.size() - 1), 0);
 						writeVectorIntoPage(nextPagePath, nextPage);
-						currentPage.remove(currentPage.size() - 1);
 						writeVectorIntoPage(currentPagePath, currentPage);
 					}
-				}
 				//in this else, the page has overflows, so we check them instead of looking at the next page
-				else {
+				}else {
 					//checking if all overflow pages are full
 					boolean areAllPagesFull = true;
 					int i;
@@ -1323,7 +1315,7 @@ public class DBApp implements DBAppInterface {
 					}
 					//if pages are full, create a new overflow page
 					if (areAllPagesFull) {
-						i = overflowPageCount + 1;
+						i++;
 						String newPagePath = tableName + "[" + pageNumber + "](" + i + ").class";
 						Vector<Hashtable<String, Object>> newPage = new Vector();
 						writeVectorIntoPage(newPagePath, newPage);
@@ -1336,27 +1328,25 @@ public class DBApp implements DBAppInterface {
 						String nextLoopPagePath = tableName + "[" + pageNumber + "](" + (j + 1) + ").class";
 						Vector<Hashtable<String, Object>> nextLoopPage = readPageIntoVector(nextLoopPagePath);
 
-						nextLoopPage.insertElementAt(loopPage.get(loopPage.size() - 1), 0);
-						loopPage.remove(loopPage.size() - 1);
+						nextLoopPage.insertElementAt(loopPage.remove(loopPage.size() - 1), 0);
 
 						writeVectorIntoPage(loopPagePath, loopPage);
-						if (nextLoopPage.size() <= maxRowsInPage)
+						if (nextLoopPage.size() <= maxRowsInPage) {
 							writeVectorIntoPage(nextLoopPagePath, nextLoopPage);
-						else {
+						}else {
 							loopPage = nextLoopPage;
 							loopPagePath = nextLoopPagePath;
 						}
 					}
 				}
-			}
 			//this else means that the current page is an overflow page, so we will insert and shift in the overflow pages
-			else {
+			}else {
 				//again checking if all pages are full and creating a new overflow page if so
 				boolean areAllPagesFull = true;
 				int i;
 				String loopPagePath = null;
 				Vector<Hashtable<String, Object>> loopPage = null;
-				for (i = 1; i <= overflowPageCount; i++) {
+				for (i = overflowNumber+1; i <= overflowPageCount; i++) {
 					loopPagePath = tableName + "[" + pageNumber + "](" + i + ").class";
 					loopPage = readPageIntoVector(loopPagePath);
 					if (loopPage.size() < maxRowsInPage) {
@@ -1378,21 +1368,19 @@ public class DBApp implements DBAppInterface {
 					String nextLoopPagePath = tableName + "[" + pageNumber + "](" + (j + 1) + ").class";
 					Vector<Hashtable<String, Object>> nextLoopPage = readPageIntoVector(nextLoopPagePath);
 
-					nextLoopPage.insertElementAt(loopPage.get(loopPage.size() - 1), 0);
-					loopPage.remove(loopPage.size() - 1);
+					nextLoopPage.insertElementAt(loopPage.remove(loopPage.size() - 1), 0);
 
 					writeVectorIntoPage(loopPagePath, loopPage);
-					if (nextLoopPage.size() <= maxRowsInPage)
+					if (nextLoopPage.size() <= maxRowsInPage) {
 						writeVectorIntoPage(nextLoopPagePath, nextLoopPage);
-					else {
+					}else {
 						loopPage = nextLoopPage;
 						loopPagePath = nextLoopPagePath;
 					}
 				}
 			}
-		}
-		//this else means that the current page is not full, so we serialize normally
-		else
+			//this else means that the current page is not full, so we serialize normally
+		}else
 			writeVectorIntoPage(currentPagePath, currentPage);
 	}
 
