@@ -1151,7 +1151,7 @@ public class DBApp implements DBAppInterface {
 				if (arr[0].equals(strTableName)) {
 					// check if hashtable contains same column name as metadata
 					if (htblColNameValue.containsKey(arr[1])) {
-
+						//
 						// check if this column is the primary key
 						if (arr[3].equals("true")) {
 							Primarykey = arr[1];
