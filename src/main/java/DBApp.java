@@ -1287,7 +1287,7 @@ public class DBApp implements DBAppInterface {
 					}
 					//if pages are full, create a new overflow page
 					if (areAllPagesFull) {
-						i++;
+						i = overflowPageCount + 1;
 						String newPagePath = tableName + "[" + pageNumber + "](" + i + ").class";
 						Vector<Hashtable<String, Object>> newPage = new Vector();
 						writeVectorIntoPage(newPagePath, newPage);
