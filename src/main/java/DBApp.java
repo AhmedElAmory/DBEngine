@@ -1,33 +1,22 @@
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-//602
-//497
 
 public class DBApp implements DBAppInterface {
-	int counter=0;
 	// Constructor
 	public DBApp() {
 		init();
 	}
 
-	// this does whatever initialization you would like
-	// or leave it empty if there is no code you want to
-	// execute at application startup
 	public void init() {
-
+		//creating the data folder if doesn't exist
 		if (!new File("src\\main\\resources\\data").exists()) {
 			// Creating a File object
 			File file = new File("src\\main\\resources\\data");
 			// Creating the directory
 			boolean bool = file.mkdir();
-
 		}
-
 	}
 
 	// following method creates one table only
@@ -38,7 +27,6 @@ public class DBApp implements DBAppInterface {
 	// type as value
 	// htblColNameMin and htblColNameMax for passing minimum and maximum values
 	// for data in the column. Key is the name of the column
-
 	public void createTable(String strTableName, String strClusteringKeyColumn,
 			Hashtable<String, String> htblColNameType, Hashtable<String, String> htblColNameMin,
 			Hashtable<String, String> htblColNameMax) throws DBAppException {
@@ -68,11 +56,6 @@ public class DBApp implements DBAppInterface {
 	// following method inserts one row only.
 	// htblColNameValue must include a value for the primary key
 	public void insertIntoTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
-		// check if columns in hashtable exist in metadata and are of correct datatypes
-//////////check date-time input constraintss///////////////////////////////////////////////////////////
-//////////make sure of min max constraints and size and that they are the same as name-type hashtable
-		
-		System.out.println(counter++);
 		checkInsertConstraints(strTableName, htblColNameValue);
 
 		File dir = new File("src\\main\\resources\\data");
@@ -120,11 +103,9 @@ public class DBApp implements DBAppInterface {
 
 				String file = binarySearchOnPages(strTableName, numberOfpages, primaryKey, primarykeyvalue,
 						primarykeyType);
-				
 
 				binarySearchAndInsertInPages(primaryKey, strTableName, getFilePageNumber(file),
 						getFileOverflowNumber(file), primarykeyvalue, primarykeyType, htblColNameValue);
-
 			}
 		}
 	}
@@ -190,27 +171,26 @@ public class DBApp implements DBAppInterface {
 			
 			if(!location.equals("")) {
 
-			String locations[] = location.split(" ");
-			String pageFileName = locations[0];
-			int index = Integer.parseInt(locations[1]);
+				String locations[] = location.split(" ");
+				String pageFileName = locations[0];
+				int index = Integer.parseInt(locations[1]);
+	
+				Vector<Hashtable<String, Object>> pageVector = readPageIntoVector(pageFileName);
+	
+				pageVector.get(index).putAll(htblColNameValue);
+	
+				try {
+					FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\" + pageFileName);
+					ObjectOutputStream out = new ObjectOutputStream(fileOut);
+					out.writeObject(pageVector);
+					out.close();
+					fileOut.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 
-			Vector<Hashtable<String, Object>> pageVector = readPageIntoVector(pageFileName);
-
-			pageVector.get(index).putAll(htblColNameValue);
-
-			try {
-				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\" + pageFileName);
-				ObjectOutputStream out = new ObjectOutputStream(fileOut);
-				out.writeObject(pageVector);
-				out.close();
-				fileOut.close();
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
-
-			}
-			// call method with tableName,ClusteringKey name,Clustering key value,
-			// Clustering key type,and hashtable
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -222,7 +202,6 @@ public class DBApp implements DBAppInterface {
 	// to identify which rows/tuples to delete.
 	// htblColNameValue entries are ANDED together
 	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
-
 		// Check constraints
 		String PrimaryKey = checkDeleteConstraints(strTableName, htblColNameValue);
 
@@ -306,10 +285,7 @@ public class DBApp implements DBAppInterface {
 						} else { // it is an overflow page
 							if (pageVector.size() == 0) { // If the page is empty (size of vector==0), we delete it
 								File f1 = new File(
-										"src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + j + ").class"); // file
-																															// to
-																															// be
-																															// deleted
+										"src\\main\\resources\\data\\" + strTableName + "[" + i + "](" + j + ").class"); 
 								f1.delete();
 
 								// Decrement all overflow pages with overflow number > j
@@ -346,7 +322,6 @@ public class DBApp implements DBAppInterface {
 		return null;
 	}
 	// Supplement methods
-
 	// This method check if the inserted table already exists.
 	public boolean checkTableExists(String tableName) {
 		try {
@@ -490,22 +465,22 @@ public class DBApp implements DBAppInterface {
 							String minDates[] = arr[5].split("-");
 							String maxDates[] = arr[6].split("-");
 							int compareToMin = compare(htblColNameValue.get(arr[1]),
-									new Date(Integer.parseInt(minDates[0]), Integer.parseInt(minDates[1]),
+									new Date(Integer.parseInt(minDates[0])-1900, Integer.parseInt(minDates[1])-1,
 											Integer.parseInt(minDates[2])),
 									arr[2]);
 							int compareToMax = compare(htblColNameValue.get(arr[1]),
-									new Date(Integer.parseInt(maxDates[0]), Integer.parseInt(maxDates[1]),
+									new Date(Integer.parseInt(maxDates[0])-1900, Integer.parseInt(maxDates[1])-1,
 											Integer.parseInt(maxDates[2])),
 									arr[2]);
-
-//							if (compareToMin < 0) {
-//								throw new DBAppException(
-//										"The value inserted in column " + arr[1] + " is below the minimum value");
-//							}
-//							if (compareToMax > 0) {
-//								throw new DBAppException(
-//										"The value inserted in column " + arr[1] + " is above the maximum value");
-//							}
+							
+							if (compareToMin < 0) {
+								throw new DBAppException(
+										"The value inserted in column " + arr[1] + " is below the minimum value");
+							}
+							if (compareToMax > 0) {
+								throw new DBAppException(
+										"The value inserted in column " + arr[1] + " is above the maximum value");
+							}
 						} else {
 							int compareToMin = compare(htblColNameValue.get(arr[1]), arr[5], arr[2]);
 							int compareToMax = compare(htblColNameValue.get(arr[1]), arr[6], arr[2]);
@@ -598,22 +573,22 @@ public class DBApp implements DBAppInterface {
 							String minDates[] = arr[5].split("-");
 							String maxDates[] = arr[6].split("-");
 							int compareToMin = compare(htblColNameValue.get(arr[1]),
-									new Date(Integer.parseInt(minDates[0]), Integer.parseInt(minDates[1]),
+									new Date(Integer.parseInt(minDates[0])-1900, Integer.parseInt(minDates[1])-1,
 											Integer.parseInt(minDates[2])),
 									arr[2]);
 							int compareToMax = compare(htblColNameValue.get(arr[1]),
-									new Date(Integer.parseInt(maxDates[0]), Integer.parseInt(maxDates[1]),
+									new Date(Integer.parseInt(maxDates[0])-1900, Integer.parseInt(maxDates[1])-1,
 											Integer.parseInt(maxDates[2])),
 									arr[2]);
-
-//							if (compareToMin < 0) {
-//								throw new DBAppException(
-//										"The value inserted in column " + arr[1] + " is below the minimum value");
-//							}
-//							if (compareToMax > 0) {
-//								throw new DBAppException(
-//										"The value inserted in column " + arr[1] + " is above the maximum value");
-//							}
+							
+							if (compareToMin < 0) {
+								throw new DBAppException(
+										"The value inserted in column " + arr[1] + " is below the minimum value");
+							}
+							if (compareToMax > 0) {
+								throw new DBAppException(
+										"The value inserted in column " + arr[1] + " is above the maximum value");
+							}
 						} else {
 							int compareToMin = compare(htblColNameValue.get(arr[1]), arr[5], arr[2]);
 							int compareToMax = compare(htblColNameValue.get(arr[1]), arr[6], arr[2]);
@@ -1210,9 +1185,6 @@ public class DBApp implements DBAppInterface {
 			}
 			throw new DBAppException("No row where this primary key exists!");
 		} 
-//		else {
-//			throw new DBAppException("No row where this primary key exists!");
-//		}
 		return "";
 		
 	}
