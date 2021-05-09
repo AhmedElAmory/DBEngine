@@ -508,7 +508,6 @@ public class DBApp implements DBAppInterface {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	public void checkInsertConstraints(String strTableName, Hashtable<String, Object> htblColNameValue)
@@ -903,8 +902,7 @@ public class DBApp implements DBAppInterface {
 		return v;
 	}
 
-	//// Delete Methodssssss
-
+	//// Delete Methods
 	public void linearDeleteOnTable(String strTableName, Hashtable<String, Object> htblColNameValue) {
 
 		int TotalNumberOfPages = countNumberOfPagesWithoutOverflows(strTableName);
