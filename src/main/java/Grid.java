@@ -279,7 +279,7 @@ public class Grid {
 						}
 					}
 				}
-			//	colLevelAndDivision.put(level,mid);
+			//	colLevelAndDivision.put(level,mid); s
 			}
 		}
 		return colLevelAndDivision;
