@@ -253,7 +253,20 @@ public class Grid {
 			
 		}else{
 			// the bucket already exists so insert directly
-			Vector<BucketItem> bucket;
+			Vector<BucketItem> bucket = readBucketIntoVector(currentarray[positions.get(noOfLevels-1)].toString());
+			bucket.add(new BucketItem(colNameAndValue,pageName));
+			//Serialize it
+			try {
+				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\"+bucketFileName+ ".class");
+				ObjectOutputStream out = new ObjectOutputStream(fileOut);
+				out.writeObject(bucket);
+				out.close();
+				fileOut.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			
 		}
 
 
