@@ -618,7 +618,7 @@ public class DBApp implements DBAppInterface {
 		}
 	}
 
-	public String getFileTableName(String fileName) {
+	public static String getFileTableName(String fileName) {
 		String tableName = "";
 		int c = 0;
 		while (fileName.charAt(c) != '[') {
@@ -628,7 +628,7 @@ public class DBApp implements DBAppInterface {
 		return tableName;
 	}
 
-	public int getFilePageNumber(String fileName) {
+	public static int getFilePageNumber(String fileName) {
 		String pageNumber = "";
 		int c = 0;
 		while (fileName.charAt(c) != '[') {
@@ -642,7 +642,7 @@ public class DBApp implements DBAppInterface {
 		return Integer.parseInt(pageNumber);
 	}
 
-	public int getFileOverflowNumber(String fileName) {
+	public static int getFileOverflowNumber(String fileName) {
 		String overflowNumber = "";
 		int c = 0;
 		while (fileName.charAt(c) != '(') {
@@ -824,7 +824,7 @@ public class DBApp implements DBAppInterface {
 	}
 
 	// comparing objects
-	public int compare(Object obj1, Object obj2, String primaryKeyType) {
+	public static int compare(Object obj1, Object obj2, String primaryKeyType) {
 
 		if (primaryKeyType.equals("java.lang.Double")) {
 			if (((double) obj1) > ((double) obj2))
@@ -849,7 +849,7 @@ public class DBApp implements DBAppInterface {
 	}
 
 	// count the pages for a specific table
-	public int countNumberOfPagesWithoutOverflows(String Tablename) {
+	public static int countNumberOfPagesWithoutOverflows(String Tablename) {
 		File dir = new File("src\\main\\resources\\data");
 		File[] directoryListing = dir.listFiles();
 		int counter = 0;
@@ -866,7 +866,7 @@ public class DBApp implements DBAppInterface {
 	}
 
 	// count the overflow pages for a specific page
-	public int countNumberOfPageOverflows(String Tablename, int Number) {
+	public static int countNumberOfPageOverflows(String Tablename, int Number) {
 
 		File dir = new File("src\\main\\resources\\data");
 		File[] directoryListing = dir.listFiles();
@@ -885,7 +885,7 @@ public class DBApp implements DBAppInterface {
 		return counter;
 	}
 
-	public Vector<Hashtable<String, Object>> readPageIntoVector(String pageName) {
+	public static Vector<Hashtable<String, Object>> readPageIntoVector(String pageName) {
 		String path = "src\\main\\resources\\data\\" + pageName;
 		Vector<Hashtable<String, Object>> v = null;
 		try {
