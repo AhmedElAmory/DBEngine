@@ -16,11 +16,11 @@ public class test {
 		goDeeperCheck(arr,x-1);
 		
 		
-		String min="2003-02-28";
-		String max="2003-03-01";
+		String mind="2003-02-28";
+		String maxd="2003-03-01";
 		
-		String minDates[] =min.split("-");
-		String maxDates[] =max.split("-");
+		String minDates[] =mind.split("-");
+		String maxDates[] =maxd.split("-");
 		
 		LocalDate minDate= LocalDate.of(Integer.parseInt(minDates[0]), Integer.parseInt(minDates[1]),
 				Integer.parseInt(minDates[2]));
@@ -34,6 +34,59 @@ public class test {
 		System.out.println(minDate.toString() );
 		
 		System.out.println("Days: " + daysBetween);
+		
+		
+		Range ranges[][]=new Range[1][10];
+		
+		String min="aaaaa";	
+		String max="zzzzz";
+		
+		
+		String standard="";
+		for(int i=0;i<Math.max(min.length(), max.length());i++) {
+			if(i<min.length()&&min.charAt(i)==max.charAt(i)) {
+				standard+=min.charAt(i);
+			}else if(i<min.length()&&min.charAt(i)!=max.charAt(i)) {
+				int dif=max.charAt(i)-min.charAt(i);
+				int range=dif/10;
+				
+				boolean flag=false;
+				
+				ranges[0][0]=new Range(min,standard+(char)(min.charAt(i)+range));
+				range+=dif/10;
+				for(int j=1;j<9;j++) {
+					ranges[0][j]=new Range(ranges[0][j-1].max,standard+(char)(min.charAt(i)+range));
+					range+=dif/10;
+				}
+				ranges[0][9]=new Range(ranges[0][8].max,max);
+				break;
+			}else if(i==min.length()) {
+				int dif=max.charAt(i);
+				int range=dif/10;
+				
+				ranges[0][0]=new Range(min,standard+(char)(min.charAt(i)+range));
+				range+=dif/10;
+				for(int j=1;j<9;j++) {
+					ranges[0][j]=new Range(ranges[0][j-1].max,standard+(char)(min.charAt(i)+range));
+					range+=dif/10;
+				}
+				ranges[0][9]=new Range(ranges[0][8].max,max);
+				break;
+			}
+		}
+		
+		for(int i=0;i<10;i++) {
+			System.out.println(ranges[0][i].min+"     "+ranges[0][i].max);
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 	}
 	

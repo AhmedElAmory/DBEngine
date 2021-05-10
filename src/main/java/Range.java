@@ -4,7 +4,7 @@ public class Range {
 	Object max;
 	
 	public Range(Object min,Object max) {
-		min = this.min;
-		max= this.max;
+		this.min = min;
+		this.max= max;
 	}
 }

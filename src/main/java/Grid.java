@@ -128,21 +128,25 @@ public class Grid {
 					int range=dif/10;
 					
 					ranges[level][0]=new Range(min,standard+(char)(min.charAt(i)+range));
-					range+=range;
-					for(int j=0;j<9;j++) {
-						ranges[level][j]=new Range(ranges[level][10].max,standard+(char)(min.charAt(i)+range));
+					range+=dif/10;
+					for(int j=1;j<9;j++) {
+						ranges[level][j]=new Range(ranges[level][j-1].max,standard+(char)(min.charAt(i)+range));
+						range+=dif/10;
 					}
 					ranges[level][9]=new Range(ranges[level][8].max,max);
+					break;
 				}else if(i==min.length()) {
 					int dif=max.charAt(i);
 					int range=dif/10;
 					
 					ranges[level][0]=new Range(min,standard+(char)(min.charAt(i)+range));
-					range+=range;
-					for(int j=0;j<9;j++) {
-						ranges[level][j]=new Range(ranges[level][10].max,standard+(char)(min.charAt(i)+range));
+					range+=dif/10;
+					for(int j=1;j<9;j++) {
+						ranges[level][j]=new Range(ranges[level][j-1].max,standard+(char)(min.charAt(i)+range));
+						range+=dif/10;
 					}
 					ranges[level][9]=new Range(ranges[level][8].max,max);
+					break;
 				}
 			}
 		}
