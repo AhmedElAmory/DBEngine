@@ -193,25 +193,54 @@ public class Grid {
 
 					//To loop inside the page
 					for(int k=0; k<page.size(); k++){
-
-						//To get a hashtable of values of needed columns
-						Hashtable<String,Object> colNameAndValue = new Hashtable<String,Object>();
-						for(int z=0; z<indexColumnsArray.size();z++){
-							Object value = page.get(k).get(indexColumnsArray.get(z));
-							colNameAndValue.put(indexColumnsArray.get(z),value);
-						}
-						//After getting this hashtable we will need to use it to know where this row belongs in the grid
-						String positionInGrid = getPositionInGrid(colNameAndValue);
-						// Now we have to insert the record in this place
-
+						insertIntoGrid(page.get(k));
 					}
 				}
 			}
 		//}
 	}
 
-	public String getPositionInGrid(Hashtable<String,Object> colNameAndValue){
+	public void insertIntoGrid(Hashtable<String,Object> row){
 
+		Set<String> indexColumnsSet = this.namesAndLevels.keySet();
+		ArrayList<String> indexColumnsArray = new ArrayList<String>(indexColumnsSet.size());
+		indexColumnsArray.addAll(indexColumnsSet);
+
+		//To get a hashtable of values of needed columns (columns of the index)
+		Hashtable<String,Object> colNameAndValue = new Hashtable<String,Object>();
+		for(int i=0; i<indexColumnsArray.size(); i++){
+			Object value = row.get(indexColumnsArray.get(i));
+			colNameAndValue.put(indexColumnsArray.get(i),value);
+		}
+		//After getting this hashtable we will need to use it to know where this row belongs in the grid
+		Hashtable<Integer,Integer> positions = getPositionInGrid(colNameAndValue);
+		// Now we have to insert the record in this place
+
+		int noOfLevels = indexColumnsArray.size();
+		Object[] currentarray = this.array;
+		for(int i=0; i<noOfLevels-1; i++){
+			currentarray=(Object[])currentarray[positions.get(i)];
+		}
+		Object requiredBlock = currentarray[positions.get(noOfLevels-1)];
+
+		if(requiredBlock==null){
+			//create new bucket
+			Vector<String> bucket = new Vector<String>();
+
+
+		}else{
+
+		}
+
+
+
+
+	}
+
+
+	public Hashtable<Integer,Integer> getPositionInGrid(Hashtable<String,Object> colNameAndValue){
+
+		Hashtable<Integer,Integer> colLevelAndDivision = new Hashtable<Integer,Integer>();
 		Set<String> indexColumnsSet = this.namesAndLevels.keySet();
 		ArrayList<String> indexColumnsArray = new ArrayList<String>(indexColumnsSet.size());
 		indexColumnsArray.addAll(indexColumnsSet);
@@ -220,27 +249,39 @@ public class Grid {
 
 			int level = namesAndLevels.get(indexColumnsArray.get(i));
 			Object value = colNameAndValue.get(indexColumnsArray.get(i));
+			String dataType = namesAndDataTypes.get(indexColumnsArray.get(i));
 			//Now we need to get the position of this value in its level
 			int position;
 			if(value==null){
 				position=10;
 			}else{
-
 				//We will binary search over the divisions
 				int start=0;
 				int end=9;
-
+				int mid=0;
 				while(start <= end){
-					int mid = (start + end)/2;
+					mid = (start + end)/2;
 
 					Object minOfDivision = ranges[level][mid].min;
 					Object maxOfDivision = ranges[level][mid].max;
 
-					int comparison;
+					int comparisonWithMin = DBApp.compare(value,minOfDivision,dataType);
+					int comparisonWithMax = DBApp.compare(value,maxOfDivision,dataType);
 
+					if(comparisonWithMin<0){
+						end = mid-1;
+					}else{  // >=0
+
+						if(comparisonWithMax<0){
+							colLevelAndDivision.put(level,mid);
+						}else{
+							start= mid+1;
+						}
+					}
 				}
+			//	colLevelAndDivision.put(level,mid);
 			}
 		}
-		return "";
+		return colLevelAndDivision;
 	}
 }
