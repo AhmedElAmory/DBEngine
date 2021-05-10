@@ -1,3 +1,6 @@
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -10,9 +13,31 @@ public class test {
 	public static void main(String[] args) {
 
 
-		Vector<Hashtable<String, Object>> page = DBApp.readPageIntoVector("students[1](0).class");
+//		Vector<Hashtable<String, Object>> page = new Vector<Hashtable<String,Object>>();
+//		
+//		Hashtable<String, Object> a = new Hashtable<String, Object>();
+//		a.put("name", "mohamed");
+//		a.put("age", 15);
+//		
+//		page.add(a);
+//		
+//		
+//		try {
+//			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\tessst.class");
+//			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+//			out.writeObject(page);
+//			out.close();
+//			fileOut.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		
+		//Vector<Hashtable<String, Object>> page2 = DBApp.readPageIntoVector("tessst");
+		
+		
+		
 
-		System.out.println(page);
+		//System.out.println(page);
 
 		
 //		Object[] arr= new Object[10];

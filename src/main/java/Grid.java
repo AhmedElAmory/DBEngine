@@ -1,6 +1,10 @@
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -43,7 +47,7 @@ public class Grid {
 		for(int i=0; i<namesAndLevels.size(); i++) {
 		
 			try {
-				BufferedReader csvReader =csvReader = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+				BufferedReader csvReader = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
 				String line = csvReader.readLine();
 				while (line != null) {
 				    String[] data = line.split(",");
@@ -193,14 +197,14 @@ public class Grid {
 
 					//To loop inside the page
 					for(int k=0; k<page.size(); k++){
-						insertIntoGrid(page.get(k));
+						insertIntoGrid(page.get(k), this.tableName+"["+i+"]("+j+").class");
 					}
 				}
 			}
 		//}
 	}
 
-	public void insertIntoGrid(Hashtable<String,Object> row){
+	public void insertIntoGrid(Hashtable<String,Object> row,String pageName){
 
 		Set<String> indexColumnsSet = this.namesAndLevels.keySet();
 		ArrayList<String> indexColumnsArray = new ArrayList<String>(indexColumnsSet.size());
@@ -215,26 +219,63 @@ public class Grid {
 		//After getting this hashtable we will need to use it to know where this row belongs in the grid
 		Hashtable<Integer,Integer> positions = getPositionInGrid(colNameAndValue);
 		// Now we have to insert the record in this place
-
 		int noOfLevels = indexColumnsArray.size();
 		Object[] currentarray = this.array;
 		for(int i=0; i<noOfLevels-1; i++){
 			currentarray=(Object[])currentarray[positions.get(i)];
 		}
-		Object requiredBlock = currentarray[positions.get(noOfLevels-1)];
+		
 
-		if(requiredBlock==null){
-			//create new bucket
-			Vector<String> bucket = new Vector<String>();
+		if(currentarray[positions.get(noOfLevels-1)]==null){
+			//Create new bucket
+			Vector<BucketItem> bucket = new Vector<BucketItem>();
+			//Insert in it the first value
+			bucket.add(new BucketItem(colNameAndValue,pageName));
+			
+			//Create its File name
+			String bucketFileName="B"+this.tableName;
+			for(int i=0;i<noOfLevels;i++) {
+				bucketFileName= bucketFileName + "["+positions.get(i) +"]";
+			}
+			//Serialize it
+			try {
+				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\"+bucketFileName+ ".class");
+				ObjectOutputStream out = new ObjectOutputStream(fileOut);
+				out.writeObject(bucket);
+				out.close();
+				fileOut.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
-
+			//save its name in the grid array
+			currentarray[positions.get(noOfLevels-1)] = bucketFileName;
+			
 		}else{
-
+			// the bucket already exists so insert directly
+			Vector<BucketItem> bucket;
 		}
 
 
 
 
+	}
+	
+	public static Vector<BucketItem> readBucketIntoVector(String pageName) {
+		String path = "src\\main\\resources\\data\\" + pageName;
+		Vector<BucketItem> v = null;
+		try {
+			FileInputStream fileIn = new FileInputStream(path);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			v = (Vector) in.readObject();
+			in.close();
+			fileIn.close();
+		} catch (IOException i) {
+			i.printStackTrace();
+		} catch (ClassNotFoundException c) {
+			c.printStackTrace();
+		}
+		return v;
 	}
 
 
@@ -251,9 +292,8 @@ public class Grid {
 			Object value = colNameAndValue.get(indexColumnsArray.get(i));
 			String dataType = namesAndDataTypes.get(indexColumnsArray.get(i));
 			//Now we need to get the position of this value in its level
-			int position;
 			if(value==null){
-				position=10;
+				colLevelAndDivision.put(level,10);
 			}else{
 				//We will binary search over the divisions
 				int start=0;
@@ -265,8 +305,8 @@ public class Grid {
 					Object minOfDivision = ranges[level][mid].min;
 					Object maxOfDivision = ranges[level][mid].max;
 
-					int comparisonWithMin = DBApp.compare(value,minOfDivision,dataType);
-					int comparisonWithMax = DBApp.compare(value,maxOfDivision,dataType);
+					int comparisonWithMin = DBApp.compare(value, minOfDivision, dataType);
+					int comparisonWithMax = DBApp.compare(value, maxOfDivision, dataType);
 
 					if(comparisonWithMin<0){
 						end = mid-1;
