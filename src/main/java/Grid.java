@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
@@ -109,12 +110,27 @@ public class Grid {
 			long daysBetween = ChronoUnit.DAYS.between(minDate, maxDate);
 
 			long range=daysBetween/10;
+			
+			
+			
 			ranges[level][0]=new Range(	minDate,minDate.plusDays(range));
 			for (int i=1;i<9;i++) {
 				LocalDate m=(LocalDate)ranges[level][i-1].max;
 				ranges[level][i]=new Range(m, m.plusDays(range));
 			}
 			ranges[level][9]=new Range(ranges[level][8].max,maxDate);
+			
+			
+			for(int i=0;i<10;i++) {
+				
+				String[] oldMin=((LocalDate)ranges[level][i].min).toString().split("-");
+				String[] oldMax=((LocalDate)ranges[level][i].max).toString().split("-");
+				
+				Date newMin= new Date(Integer.parseInt(oldMin[0])-1900,Integer.parseInt(oldMin[1])-1,Integer.parseInt(oldMin[2]));
+				Date newMax= new Date(Integer.parseInt(oldMax[0])-1900,Integer.parseInt(oldMax[1])-1,Integer.parseInt(oldMax[2]));
+				
+				ranges[level][i]=new Range(newMin,newMax);
+			}
 
 		}else {
 			String standard="";
