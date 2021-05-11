@@ -1,11 +1,7 @@
 import java.io.*;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 
 public class Grid implements Serializable {
 
@@ -236,21 +232,22 @@ public class Grid implements Serializable {
 			currentarray=(Object[])currentarray[levelpositions.get(i)];
 		}
 
+		//Create its bucket File name  (without overflow and size)
+		String bucketFileName="B"+this.tableName;
+		for(int i=0;i<noOfLevels;i++) {
+			bucketFileName= bucketFileName + "["+levelpositions.get(i) +"]";
+		}
+
 		if(currentarray[levelpositions.get(noOfLevels-1)]==null){
 			//Create new bucket
 			Vector<BucketItem> bucket = new Vector<BucketItem>();
 			//Insert in it the first value
 			bucket.add(new BucketItem(colNameAndValue,pageName,primaryKeyValue));
-			
-			//Create its File name
-			String bucketFileName="B"+this.tableName;
-			for(int i=0;i<noOfLevels;i++) {
-				bucketFileName= bucketFileName + "["+levelpositions.get(i) +"]";
-			}
+
 
 			//Serialize it
 			try {
-				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\"+bucketFileName+ ".class");
+				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\"+bucketFileName+ "(0).class");
 				ObjectOutputStream out = new ObjectOutputStream(fileOut);
 				out.writeObject(bucket);
 				out.close();
@@ -260,15 +257,42 @@ public class Grid implements Serializable {
 			}
 
 			//save its name in the grid array
-			currentarray[levelpositions.get(noOfLevels-1)] = bucketFileName;
+			currentarray[levelpositions.get(noOfLevels-1)] = bucketFileName+"(0)";
 			
 		}else{
-			// the bucket already exists so insert into it or the first empty overflow
-			Vector<BucketItem> bucket = readBucketIntoVector(currentarray[levelpositions.get(noOfLevels-1)].toString()+ ".class");
-			bucket.add(new BucketItem(colNameAndValue,pageName,primaryKeyValue));
+			// the bucket already exists so insert into last overflow
+			int lastoverflow = getLastOverflowNumber(bucketFileName);
+			Vector<BucketItem> bucket = readBucketIntoVector( bucketFileName+"("+lastoverflow+").class");
+
+			//loading data from config file and saving max number of rows in a variable
+			File appConfig = new File("src\\main\\resources\\DBApp.config");
+			FileInputStream propsInput = null;
+			int maxRowsInBucket=0;
+			try {
+				propsInput = new FileInputStream("src\\main\\resources\\DBApp.config");
+				Properties prop = new Properties();
+				prop.load(propsInput);
+				maxRowsInBucket= Integer.parseInt((String) prop.get("MaximumRowsCountinPage"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			//if there is size then insert
+			if(bucket.size()<maxRowsInBucket){
+				bucket.add(new BucketItem(colNameAndValue,pageName,primaryKeyValue));
+			}else{
+				//create new overflow page
+				lastoverflow++;
+				//Create new bucket
+				bucket = new Vector<BucketItem>();
+				//Insert in it the first value
+				bucket.add(new BucketItem(colNameAndValue,pageName,primaryKeyValue));
+			}
+
 			//Serialize it
 			try {
-				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\"+currentarray[levelpositions.get(noOfLevels-1)].toString()+ ".class");
+				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\"
+						+bucketFileName+"("+lastoverflow+".class");
 				ObjectOutputStream out = new ObjectOutputStream(fileOut);
 				out.writeObject(bucket);
 				out.close();
@@ -279,30 +303,28 @@ public class Grid implements Serializable {
 		}
 	}
 
-//	public static int getNumberOfBucketOverflows(String bucketName){
-//		File dir = new File("src\\main\\resources\\indicesAndBuckets");
-//		File[] directoryListing = dir.listFiles();
-//		int counter = 0;
-//		if (directoryListing != null) {
-//			for (File page : directoryListing) {
-//				int overflowNumber= DBApp.getFileOverflowNumber(bucketName);
-//
-//				String currentpageName = "";
-//				int c = 0;
-//				while (page.getName().charAt(c) != '[') {
-//					currentpageName += page.getName().charAt(c);
-//					c++;
-//				}
-//
-//				if (&& overflowNumber != 0) {
-//					counter++;
-//				}
-//			}
-//		}
-//		return counter;
-//	}
 
+	public static int getLastOverflowNumber(String bucketFileName){
 
+		File dir = new File("src\\main\\resources\\indicesAndBuckets");
+		File[] directoryListing = dir.listFiles();
+		int counter =0;
+		if(directoryListing!=null){
+			for(File page : directoryListing){
+
+				String bucketName="";
+				int c =0;
+				while(page.getName().charAt(c)!='('){
+					bucketName = bucketName + page.getName().charAt(c);
+					c++;
+				}
+				if(bucketName.equals(bucketFileName)){
+					counter++;
+				}
+			}
+		}
+	return counter;
+	}
 
 
 	public static Vector<BucketItem> readBucketIntoVector(String pageName) {

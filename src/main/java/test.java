@@ -38,14 +38,16 @@ public class test {
 //			i.printStackTrace();
 //		}
 
+		test t1 = new test();
+		String[] arr = {"gpa","first_name"};
+		t1.createIndex("students",arr);
+
 		Vector<BucketItem> page = new Vector<BucketItem>();
-		page=DBApp.readBucketIntoVector("Bstudents[0][8].class");
-//
+		page=DBApp.readBucketIntoVector("Bstudents[0][8](0).class");
 		System.out.println(page);
 
-//		test t1 = new test();
-//		String[] arr = {"gpa","first_name"};
-//		t1.createIndex("students",arr);
+		System.out.println(t1.allIndexes);
+
 
 
 
