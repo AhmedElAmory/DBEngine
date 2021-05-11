@@ -1,16 +1,56 @@
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import javax.management.ObjectName;
+import java.io.*;
+import java.lang.reflect.Array;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
 public class test {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws DBAppException {
+
+
+	//	Vector<Hashtable<String,Object>> page = new Vector<>();
+//		Hashtable<String,Object> a = new Hashtable<String,Object>();
+//		a.put("id","1");
+//		a.put("gpa",1.0);
+//		a.put("first_name","mohamed");
+//		page.add(a);
+//
+//		try {
+//			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\students[1](0).class" );
+//			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+//			out.writeObject(page);
+//			out.close();
+//			fileOut.close();
+//		} catch (IOException i) {
+//			i.printStackTrace();
+//		}
+
+//		page=DBApp.readPageIntoVector("students[1](0).class");
+//		System.out.println(page);
+
+		String[] arr = {"gpa","first_name"};
+		createIndex("students",arr);
+
+		//DBApp x = new DBApp();
+
+//		ArrayList<String> a = new ArrayList<String>();
+//		a.add("aa");
+//		a.add("bb");
+//
+//		System.out.println(a.contains("aa")? "sdsds":"asasaasas");
+
+//		Hashtable<String, ArrayList<String>> a = new Hashtable<String, ArrayList<String>>();
+//
+//		if(a.get("asas")==null){
+//			System.out.println("dssd");
+//		}
+
 
 
 //		Vector<Hashtable<String, Object>> page = new Vector<Hashtable<String,Object>>();
@@ -111,16 +151,65 @@ public class test {
 //		for(int i=0;i<10;i++) {
 //			System.out.println(ranges[0][i].min+"     "+ranges[0][i].max);
 //		}
+
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+	}
+
+
+	// following method creates one index – either multidimensional
+	// or single dimension depending on the count of column names passed.
+	public static void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
+		checkCreateIndexExceptions(strTableName,strarrColName);
+
+		Grid index = new Grid(strTableName,strarrColName);
+//		ArrayList<Grid> a = allIndexes.get(strTableName);
+//		if(a==null){
+//			a =new ArrayList<Grid>();
+//			a.add(index);
+//			allIndexes.put(strTableName,a);
+//		}else{
+//			a.add(index);
+//		}
+	}
+
+
+	public static void checkCreateIndexExceptions(String strTableName, String[] strarrColName) throws DBAppException {
+
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			// check if column names in hashtable exist in metadata
+			int countCorrectColumns = 0;
+			boolean tableExist = false;
+			ArrayList<String> listOfCol = new ArrayList<String>();
+			for(int i=0; i<strarrColName.length ;i++){
+				listOfCol.add(strarrColName[i]);
+			}
+
+			while (current != null) {
+				String arr[] = current.split(",");
+				// check if metadata row has same table name as input
+				if (arr[0].equals(strTableName)) {
+					tableExist=true;
+					// check if hashtable contains same column name as metadata
+					if (listOfCol.contains(arr[1])) {
+						countCorrectColumns++;
+					}
+				}
+				current = br.readLine();
+			}
+			br.close();
+			if (!tableExist) {
+				throw new DBAppException("Table does not exist!");
+			}
+			if (!(countCorrectColumns == listOfCol.size())) {
+				throw new DBAppException("Array Columns are not in metadata!");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
 	}
 	
 	public static void goDeeper(Object[] array,int n) {

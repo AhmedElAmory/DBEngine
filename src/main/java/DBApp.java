@@ -4,8 +4,11 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class DBApp implements DBAppInterface {
+
+	Hashtable<String,ArrayList<Grid>> allIndexes;
 	// Constructor
 	public DBApp() {
+		allIndexes=new Hashtable<String,ArrayList<Grid>>();
 		init();
 	}
 
@@ -312,9 +315,60 @@ public class DBApp implements DBAppInterface {
 		}
 	}
 
+
 	// following method creates one index – either multidimensional
 	// or single dimension depending on the count of column names passed.
 	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
+		checkCreateIndexExceptions(strTableName,strarrColName);
+
+		Grid index = new Grid(strTableName,strarrColName);
+		ArrayList<Grid> a = allIndexes.get(strTableName);
+		if(a==null){
+			a =new ArrayList<Grid>();
+			a.add(index);
+			allIndexes.put(strTableName,a);
+		}else{
+			a.add(index);
+		}
+	}
+
+
+	public static void checkCreateIndexExceptions(String strTableName, String[] strarrColName) throws DBAppException {
+
+		try {
+			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String current = br.readLine();
+			// check if column names in hashtable exist in metadata
+			int countCorrectColumns = 0;
+			boolean tableExist = false;
+			ArrayList<String> listOfCol = new ArrayList<String>();
+			for(int i=0; i<strarrColName.length ;i++){
+				listOfCol.add(strarrColName[i]);
+			}
+
+			while (current != null) {
+				String arr[] = current.split(",");
+				// check if metadata row has same table name as input
+				if (arr[0].equals(strTableName)) {
+					tableExist=true;
+					// check if hashtable contains same column name as metadata
+					if (listOfCol.contains(arr[1])) {
+						countCorrectColumns++;
+					}
+				}
+				current = br.readLine();
+			}
+			br.close();
+			if (!tableExist) {
+				throw new DBAppException("Table does not exist!");
+			}
+			if (!(countCorrectColumns == listOfCol.size())) {
+				throw new DBAppException("Array Columns are not in metadata!");
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 
 	}
 
@@ -323,7 +377,7 @@ public class DBApp implements DBAppInterface {
 	}
 	// Supplement methods
 	// This method check if the inserted table already exists.
-	public boolean checkTableExists(String tableName) {
+	public static boolean checkTableExists(String tableName) {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
 			String current = br.readLine();
