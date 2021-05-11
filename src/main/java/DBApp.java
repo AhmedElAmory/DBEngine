@@ -319,9 +319,11 @@ public class DBApp implements DBAppInterface {
 	// following method creates one index – either multidimensional
 	// or single dimension depending on the count of column names passed.
 	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
-		checkCreateIndexExceptions(strTableName,strarrColName);
-
-		Grid index = new Grid(strTableName,strarrColName);
+		String primarycolAndDataType = checkCreateIndexExceptions(strTableName,strarrColName);
+		String[] x = primarycolAndDataType.split(" ");
+		String primaryCol = x[0];
+		String primaryDataType = x[1];
+		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType);
 		ArrayList<Grid> a = allIndexes.get(strTableName);
 		if(a==null){
 			a =new ArrayList<Grid>();
@@ -330,10 +332,24 @@ public class DBApp implements DBAppInterface {
 		}else{
 			a.add(index);
 		}
+
+		try {
+			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\indices.class");
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(allIndexes);
+			out.close();
+			fileOut.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 
-	public static void checkCreateIndexExceptions(String strTableName, String[] strarrColName) throws DBAppException {
+	public static String checkCreateIndexExceptions(String strTableName, String[] strarrColName) throws DBAppException {
+
+		String primaryColumn="";
+		String primaryDataType="";
 
 		try {
 			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
@@ -355,6 +371,11 @@ public class DBApp implements DBAppInterface {
 					if (listOfCol.contains(arr[1])) {
 						countCorrectColumns++;
 					}
+					if(arr[3]=="true"){
+						primaryColumn=arr[1];
+						primaryDataType=arr[2];
+					}
+
 				}
 				current = br.readLine();
 			}
@@ -369,7 +390,7 @@ public class DBApp implements DBAppInterface {
 			e.printStackTrace();
 		}
 
-
+		return primaryColumn+" "+primaryDataType;
 	}
 
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
@@ -942,6 +963,23 @@ public class DBApp implements DBAppInterface {
 	public static Vector<Hashtable<String, Object>> readPageIntoVector(String pageName) {
 		String path = "src\\main\\resources\\data\\" + pageName;
 		Vector<Hashtable<String, Object>> v = null;
+		try {
+			FileInputStream fileIn = new FileInputStream(path);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			v = (Vector) in.readObject();
+			in.close();
+			fileIn.close();
+		} catch (IOException i) {
+			i.printStackTrace();
+		} catch (ClassNotFoundException c) {
+			c.printStackTrace();
+		}
+		return v;
+	}
+
+	public static Vector<BucketItem> readBucketIntoVector(String pageName) {
+		String path = "src\\main\\resources\\indicesAndBuckets\\" + pageName;
+		Vector<BucketItem> v = null;
 		try {
 			FileInputStream fileIn = new FileInputStream(path);
 			ObjectInputStream in = new ObjectInputStream(fileIn);

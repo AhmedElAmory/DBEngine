@@ -11,10 +11,17 @@ import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
 public class test {
+
+	Hashtable<String,ArrayList<Grid>> allIndexes;
+
+	public test(){
+		allIndexes =  new Hashtable<String,ArrayList<Grid>>();
+	}
+
 	public static void main(String[] args) throws DBAppException {
 
 
-	//	Vector<Hashtable<String,Object>> page = new Vector<>();
+
 //		Hashtable<String,Object> a = new Hashtable<String,Object>();
 //		a.put("id","1");
 //		a.put("gpa",1.0);
@@ -31,11 +38,16 @@ public class test {
 //			i.printStackTrace();
 //		}
 
-//		page=DBApp.readPageIntoVector("students[1](0).class");
-//		System.out.println(page);
+		Vector<BucketItem> page = new Vector<BucketItem>();
+		page=DBApp.readBucketIntoVector("Bstudents[0][8].class");
+//
+		System.out.println(page);
 
-		String[] arr = {"gpa","first_name"};
-		createIndex("students",arr);
+//		test t1 = new test();
+//		String[] arr = {"gpa","first_name"};
+//		t1.createIndex("students",arr);
+
+
 
 		//DBApp x = new DBApp();
 
@@ -158,26 +170,42 @@ public class test {
 
 	// following method creates one index – either multidimensional
 	// or single dimension depending on the count of column names passed.
-	public static void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
-		checkCreateIndexExceptions(strTableName,strarrColName);
+	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
+		String primarycolAndDataType = checkCreateIndexExceptions(strTableName,strarrColName);
+		String[] x = primarycolAndDataType.split(",");
+		String primaryCol = x[0];
+		String primaryDataType = x[1];
+		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType);
+		ArrayList<Grid> a = allIndexes.get(strTableName);
+		if(a==null){
+			a =new ArrayList<Grid>();
+			a.add(index);
+			allIndexes.put(strTableName,a);
+		}else{
+			a.add(index);
+		}
 
-		Grid index = new Grid(strTableName,strarrColName);
-//		ArrayList<Grid> a = allIndexes.get(strTableName);
-//		if(a==null){
-//			a =new ArrayList<Grid>();
-//			a.add(index);
-//			allIndexes.put(strTableName,a);
-//		}else{
-//			a.add(index);
-//		}
+		try {
+			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\indices.class");
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			out.writeObject(allIndexes);
+			out.close();
+			fileOut.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 
-	public static void checkCreateIndexExceptions(String strTableName, String[] strarrColName) throws DBAppException {
+	public static String checkCreateIndexExceptions(String strTableName, String[] strarrColName) throws DBAppException {
 
+		String primaryColumn="";
+		String primaryDataType="";
 		try {
 			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
 			String current = br.readLine();
+
 			// check if column names in hashtable exist in metadata
 			int countCorrectColumns = 0;
 			boolean tableExist = false;
@@ -195,6 +223,11 @@ public class test {
 					if (listOfCol.contains(arr[1])) {
 						countCorrectColumns++;
 					}
+					if(arr[3].equals("true")){
+						primaryColumn=arr[1];
+						primaryDataType=arr[2];
+					}
+
 				}
 				current = br.readLine();
 			}
@@ -208,8 +241,7 @@ public class test {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-
+		return primaryColumn+","+primaryDataType;
 	}
 	
 	public static void goDeeper(Object[] array,int n) {

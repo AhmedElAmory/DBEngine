@@ -1,10 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -13,15 +7,20 @@ import java.util.Hashtable;
 import java.util.Set;
 import java.util.Vector;
 
-public class Grid {
+public class Grid implements Serializable {
+
 	private String tableName;
 	private Object[] array;
 	private Range[][] ranges;
 	private Hashtable<String,Integer> namesAndLevels;
 	private Hashtable<String,String> namesAndDataTypes;
+	private String primaryColumn;
+	private String primaryDataType;
 	
-	public Grid(String tableName,String[] strarrColName) {
+	public Grid(String tableName,String[] strarrColName,String primaryColumn,String primaryDataType) {
 		this.tableName=tableName;
+		this.primaryColumn=primaryColumn;
+		this.primaryDataType=primaryDataType;
 		this.namesAndLevels = new Hashtable<String,Integer>();
 		this.namesAndDataTypes = new Hashtable<String,String>();
 
@@ -29,14 +28,15 @@ public class Grid {
 			namesAndLevels.put(strarrColName[i], i);
 		}
 		array = new Object[11];
-		goDeeper(array,strarrColName.length);
+		goDeeper(array,strarrColName.length-1);
 		
 		ranges = new Range[strarrColName.length][10];
 		getRanges();
 		populateIndex();
 	}
 
-	public void goDeeper(Object[] array,int n) {
+
+	public void goDeeper(Object[] array, int n) {
 		if(n==0) {
 			return;
 		}
@@ -203,7 +203,6 @@ public class Grid {
 					//To loop inside the page
 					for(int k=0; k<page.size(); k++){
 						insertIntoGrid(page.get(k), this.tableName+"["+i+"]("+j+").class");
-						System.out.println("sdsd2");
 					}
 				}
 			}
@@ -216,12 +215,17 @@ public class Grid {
 		ArrayList<String> indexColumnsArray = new ArrayList<String>(indexColumnsSet.size());
 		indexColumnsArray.addAll(indexColumnsSet);
 
+
 		//To get a hashtable of values of needed columns (columns of the index)
 		Hashtable<String,Object> colNameAndValue = new Hashtable<String,Object>();
 		for(int i=0; i<indexColumnsArray.size(); i++){
 			Object value = row.get(indexColumnsArray.get(i));
 			colNameAndValue.put(indexColumnsArray.get(i),value);
 		}
+
+		//To get value of priamarykey
+		Object primaryKeyValue = row.get(this.primaryColumn);
+
 
 		//After getting this hashtable we will need to use it to know where this row should belong in the grid
 		Hashtable<Integer,Integer> levelpositions = getPositionInGrid(colNameAndValue);
@@ -232,12 +236,11 @@ public class Grid {
 			currentarray=(Object[])currentarray[levelpositions.get(i)];
 		}
 
-
 		if(currentarray[levelpositions.get(noOfLevels-1)]==null){
 			//Create new bucket
 			Vector<BucketItem> bucket = new Vector<BucketItem>();
 			//Insert in it the first value
-			bucket.add(new BucketItem(colNameAndValue,pageName));
+			bucket.add(new BucketItem(colNameAndValue,pageName,primaryKeyValue));
 			
 			//Create its File name
 			String bucketFileName="B"+this.tableName;
@@ -247,7 +250,7 @@ public class Grid {
 
 			//Serialize it
 			try {
-				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\"+bucketFileName+ ".class");
+				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\"+bucketFileName+ ".class");
 				ObjectOutputStream out = new ObjectOutputStream(fileOut);
 				out.writeObject(bucket);
 				out.close();
@@ -260,12 +263,12 @@ public class Grid {
 			currentarray[levelpositions.get(noOfLevels-1)] = bucketFileName;
 			
 		}else{
-			// the bucket already exists so insert directly
-			Vector<BucketItem> bucket = readBucketIntoVector(currentarray[levelpositions.get(noOfLevels-1)].toString());
-			bucket.add(new BucketItem(colNameAndValue,pageName));
+			// the bucket already exists so insert into it or the first empty overflow
+			Vector<BucketItem> bucket = readBucketIntoVector(currentarray[levelpositions.get(noOfLevels-1)].toString()+ ".class");
+			bucket.add(new BucketItem(colNameAndValue,pageName,primaryKeyValue));
 			//Serialize it
 			try {
-				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\data\\"+currentarray[levelpositions.get(noOfLevels-1)].toString()+ ".class");
+				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\"+currentarray[levelpositions.get(noOfLevels-1)].toString()+ ".class");
 				ObjectOutputStream out = new ObjectOutputStream(fileOut);
 				out.writeObject(bucket);
 				out.close();
@@ -275,9 +278,35 @@ public class Grid {
 			}
 		}
 	}
-	
+
+//	public static int getNumberOfBucketOverflows(String bucketName){
+//		File dir = new File("src\\main\\resources\\indicesAndBuckets");
+//		File[] directoryListing = dir.listFiles();
+//		int counter = 0;
+//		if (directoryListing != null) {
+//			for (File page : directoryListing) {
+//				int overflowNumber= DBApp.getFileOverflowNumber(bucketName);
+//
+//				String currentpageName = "";
+//				int c = 0;
+//				while (page.getName().charAt(c) != '[') {
+//					currentpageName += page.getName().charAt(c);
+//					c++;
+//				}
+//
+//				if (&& overflowNumber != 0) {
+//					counter++;
+//				}
+//			}
+//		}
+//		return counter;
+//	}
+
+
+
+
 	public static Vector<BucketItem> readBucketIntoVector(String pageName) {
-		String path = "src\\main\\resources\\data\\" + pageName;
+		String path = "src\\main\\resources\\indicesAndBuckets\\" + pageName;
 		Vector<BucketItem> v = null;
 		try {
 			FileInputStream fileIn = new FileInputStream(path);
@@ -305,7 +334,6 @@ public class Grid {
 			int level = namesAndLevels.get(indexColumnsArray.get(i));
 			Object value = colNameAndValue.get(indexColumnsArray.get(i));
 			String dataType = namesAndDataTypes.get(indexColumnsArray.get(i));
-			System.out.println(level + "   "+ value + "   "+ dataType);
 			//Now we need to get the position of this value in its level
 			if(value==null){
 				colLevelAndDivision.put(level,10);
@@ -314,7 +342,9 @@ public class Grid {
 				int start=0;
 				int end=9;
 				int mid=0;
-				while(start <= end){
+
+				while(start<=end){
+
 					mid = (start + end)/2;
 
 					Object minOfDivision = ranges[level][mid].min;
@@ -322,13 +352,13 @@ public class Grid {
 
 					int comparisonWithMin = DBApp.compare(value, minOfDivision, dataType);
 					int comparisonWithMax = DBApp.compare(value, maxOfDivision, dataType);
-					//System.out.println("dsdsaaaaa");
 					if(comparisonWithMin<0){
 						end = mid-1;
 					}else{  // >=0
 
 						if(comparisonWithMax<0){
 							colLevelAndDivision.put(level,mid);
+							break;
 						}else{
 							start= mid+1;
 						}
@@ -336,7 +366,6 @@ public class Grid {
 				}
 				//colLevelAndDivision.put(level,mid);
 			}
-			System.out.println("sdsd");
 		}
 		return colLevelAndDivision;
 	}

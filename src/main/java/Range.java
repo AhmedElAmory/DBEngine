@@ -1,5 +1,6 @@
+import java.io.Serializable;
 
-public class Range {
+public class Range implements Serializable {
 	Object min;
 	Object max;
 	
