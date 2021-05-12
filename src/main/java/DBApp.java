@@ -20,7 +20,27 @@ public class DBApp implements DBAppInterface {
 			// Creating the directory
 			boolean bool = file.mkdir();
 		}
+		if (!new File("src\\main\\resources\\indicesAndBuckets").exists()) {
+			File file = new File("src\\main\\resources\\indicesAndBuckets");
+			boolean bool = file.mkdir();
+		}
+
+		//Read indices into memory
+		String path = "src\\main\\resources\\indices.class";
+		if(new File(path).exists()){
+			try {
+				FileInputStream fileIn = new FileInputStream(path);
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+				this.allIndexes = (Hashtable) in.readObject();
+				in.close();
+				fileIn.close();
+			} catch (IOException | ClassNotFoundException i) {
+				i.printStackTrace();
+			}
+		}
+
 	}
+
 
 	// following method creates one table only
 	// strClusteringKeyColumn is the name of the column that will be the primary
@@ -315,12 +335,11 @@ public class DBApp implements DBAppInterface {
 		}
 	}
 
-
 	// following method creates one index – either multidimensional
 	// or single dimension depending on the count of column names passed.
 	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
 		String primarycolAndDataType = checkCreateIndexExceptions(strTableName,strarrColName);
-		String[] x = primarycolAndDataType.split(" ");
+		String[] x = primarycolAndDataType.split(",");
 		String primaryCol = x[0];
 		String primaryDataType = x[1];
 		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType);
@@ -334,7 +353,7 @@ public class DBApp implements DBAppInterface {
 		}
 
 		try {
-			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\indices.class");
+			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indices.class");
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(allIndexes);
 			out.close();
@@ -343,6 +362,57 @@ public class DBApp implements DBAppInterface {
 			e.printStackTrace();
 		}
 
+		//After creating an index we have to edit the metadata to indicate that an index is created on specific columns
+		updateCSV(strTableName,strarrColName);
+
+	}
+
+	public static void updateCSV( String strTableName, String[] strarrColName)  {
+
+		ArrayList<String> listOfCol = new ArrayList<String>();
+		for(int i=0; i<strarrColName.length ;i++){
+			listOfCol.add(strarrColName[i]);
+		}
+		//Read csv to arraylist of arrays
+		ArrayList<String[]> arr = new ArrayList<String[]>();
+		BufferedReader csvReader = null;
+		try {
+			csvReader = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String row = csvReader.readLine();
+			while ( row!= null) {
+				String[] data = row.split(",");
+				arr.add(data);
+				row = csvReader.readLine();
+			}
+			csvReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		//loop on arraylist to edit needed rows
+		for(int i=0; i<arr.size();i++){
+			//check if this is needed row
+			if(arr.get(i)[0].equals(strTableName) && listOfCol.contains(arr.get(i)[1])){
+				arr.get(i)[4]="true";
+			}
+		}
+		//Now write arraylist to csv file again
+		try {
+			FileWriter csvWriter = new FileWriter("src\\main\\resources\\metadata.csv");
+			csvWriter.append("");  //to clear csv file first
+
+			csvWriter = new FileWriter("src\\main\\resources\\metadata.csv", true);
+			//Loop over arraylist
+			for(int i=0; i<arr.size();i++){
+				if(arr.get(i).length==7) {
+					csvWriter.append("\n" + arr.get(i)[0] + "," + arr.get(i)[1] + "," + arr.get(i)[2] + "," + arr.get(i)[3] + "," +
+							arr.get(i)[4] + "," + arr.get(i)[5] + "," + arr.get(i)[6]);
+				}
+			}
+			csvWriter.flush();
+			csvWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 
@@ -350,10 +420,10 @@ public class DBApp implements DBAppInterface {
 
 		String primaryColumn="";
 		String primaryDataType="";
-
 		try {
 			BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
 			String current = br.readLine();
+
 			// check if column names in hashtable exist in metadata
 			int countCorrectColumns = 0;
 			boolean tableExist = false;
@@ -371,7 +441,7 @@ public class DBApp implements DBAppInterface {
 					if (listOfCol.contains(arr[1])) {
 						countCorrectColumns++;
 					}
-					if(arr[3]=="true"){
+					if(arr[3].equals("true")){
 						primaryColumn=arr[1];
 						primaryDataType=arr[2];
 					}
@@ -389,9 +459,9 @@ public class DBApp implements DBAppInterface {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		return primaryColumn+" "+primaryDataType;
+		return primaryColumn+","+primaryDataType;
 	}
+
 
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
 		return null;

@@ -5,6 +5,7 @@ import java.util.*;
 
 public class Grid implements Serializable {
 
+	private int indexId;
 	private String tableName;
 	private Object[] array;
 	private Range[][] ranges;
@@ -19,6 +20,7 @@ public class Grid implements Serializable {
 		this.primaryDataType=primaryDataType;
 		this.namesAndLevels = new Hashtable<String,Integer>();
 		this.namesAndDataTypes = new Hashtable<String,String>();
+		this.indexId=getLastgridId()+1;
 
 		for(int i=0;i<strarrColName.length;i++) {
 			namesAndLevels.put(strarrColName[i], i);
@@ -31,6 +33,44 @@ public class Grid implements Serializable {
 		populateIndex();
 	}
 
+	@Override
+	public String toString() {
+		return "Grid{" +
+				"indexId=" + indexId +
+				", tableName='" + tableName + '\'' +
+				'}';
+	}
+
+	public int getLastgridId(){
+
+		File dir = new File("src\\main\\resources\\indicesAndBuckets");
+		File[] directoryListing = dir.listFiles();
+		int last =-1;
+		if(directoryListing!=null){
+			for(File page : directoryListing){
+
+				String tableName="";
+				int c =0;
+				while(page.getName().charAt(c)!='{'){
+					tableName = tableName + page.getName().charAt(c);
+					c++;
+				}
+				if(tableName.equals("B"+this.tableName)){
+					String id = "";
+					c++;
+					while(page.getName().charAt(c)!='}'){
+						id = id + page.getName().charAt(c);
+						c++;
+					}
+					int test = Integer.parseInt(id);
+					if(test>last){
+						last=test;
+					}
+				}
+			}
+		}
+		return last;
+	}
 
 	public void goDeeper(Object[] array, int n) {
 		if(n==0) {
@@ -222,7 +262,6 @@ public class Grid implements Serializable {
 		//To get value of priamarykey
 		Object primaryKeyValue = row.get(this.primaryColumn);
 
-
 		//After getting this hashtable we will need to use it to know where this row should belong in the grid
 		Hashtable<Integer,Integer> levelpositions = getPositionInGrid(colNameAndValue);
 		// Now we have to insert the record in this place
@@ -233,17 +272,16 @@ public class Grid implements Serializable {
 		}
 
 		//Create its bucket File name  (without overflow and size)
-		String bucketFileName="B"+this.tableName;
+		String bucketFileName="B"+this.tableName+"{"+this.indexId+"}";
 		for(int i=0;i<noOfLevels;i++) {
 			bucketFileName= bucketFileName + "["+levelpositions.get(i) +"]";
 		}
 
-		if(currentarray[levelpositions.get(noOfLevels-1)]==null){
+		if(currentarray[levelpositions.get(noOfLevels-1)]==null){ //If bucket does not exist
 			//Create new bucket
 			Vector<BucketItem> bucket = new Vector<BucketItem>();
 			//Insert in it the first value
 			bucket.add(new BucketItem(colNameAndValue,pageName,primaryKeyValue));
-
 
 			//Serialize it
 			try {
@@ -277,7 +315,7 @@ public class Grid implements Serializable {
 				e.printStackTrace();
 			}
 
-			//if there is size then insert
+			//if there is space then insert
 			if(bucket.size()<maxRowsInBucket){
 				bucket.add(new BucketItem(colNameAndValue,pageName,primaryKeyValue));
 			}else{
@@ -292,7 +330,7 @@ public class Grid implements Serializable {
 			//Serialize it
 			try {
 				FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\"
-						+bucketFileName+"("+lastoverflow+".class");
+						+bucketFileName+"("+lastoverflow+").class");
 				ObjectOutputStream out = new ObjectOutputStream(fileOut);
 				out.writeObject(bucket);
 				out.close();
@@ -308,7 +346,7 @@ public class Grid implements Serializable {
 
 		File dir = new File("src\\main\\resources\\indicesAndBuckets");
 		File[] directoryListing = dir.listFiles();
-		int counter =0;
+		int counter =-1;
 		if(directoryListing!=null){
 			for(File page : directoryListing){
 

@@ -4,10 +4,7 @@ import java.lang.reflect.Array;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class test {
@@ -15,10 +12,14 @@ public class test {
 	Hashtable<String,ArrayList<Grid>> allIndexes;
 
 	public test(){
+
 		allIndexes =  new Hashtable<String,ArrayList<Grid>>();
 	}
 
 	public static void main(String[] args) throws DBAppException {
+
+
+
 
 
 
@@ -39,14 +40,16 @@ public class test {
 //		}
 
 		test t1 = new test();
-		String[] arr = {"gpa","first_name"};
-		t1.createIndex("students",arr);
+		String[] arr = {"gpa","student_id"};
+		t1.createIndex("transcripts",arr);
 
-		Vector<BucketItem> page = new Vector<BucketItem>();
-		page=DBApp.readBucketIntoVector("Bstudents[0][8](0).class");
-		System.out.println(page);
+		//System.out.println(t1.allIndexes.get("transcripts").get(0).namesAndLevels.get("gpa"));
 
-		System.out.println(t1.allIndexes);
+//		Vector<BucketItem> page = new Vector<BucketItem>();
+//		page=DBApp.readBucketIntoVector("Btranscripts[0][4](0).class");
+//		System.out.println(page);
+
+//		System.out.println(t1.allIndexes);
 
 
 
@@ -188,7 +191,7 @@ public class test {
 		}
 
 		try {
-			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\indices.class");
+			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indices.class");
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(allIndexes);
 			out.close();
@@ -196,6 +199,64 @@ public class test {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		//After creating an index we have to edit the metadata to indicate that an index is created on specific columns
+		updateCSV(strTableName,strarrColName);
+
+	}
+
+	public static void updateCSV( String strTableName, String[] strarrColName)  {
+
+		ArrayList<String> listOfCol = new ArrayList<String>();
+		for(int i=0; i<strarrColName.length ;i++){
+			listOfCol.add(strarrColName[i]);
+		}
+
+		//Read csv to arraylist of arrays
+		ArrayList<String[]> arr = new ArrayList<String[]>();
+		BufferedReader csvReader = null;
+		try {
+			csvReader = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
+			String row = csvReader.readLine();
+			while ( row!= null) {
+				String[] data = row.split(",");
+				arr.add(data);
+				row = csvReader.readLine();
+			}
+			csvReader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		//loop on arraylist to edit needed rows
+		for(int i=0; i<arr.size();i++){
+
+			//check if this is needed row
+			if(arr.get(i)[0].equals(strTableName) && listOfCol.contains(arr.get(i)[1])){
+				arr.get(i)[4]="true";
+			}
+		}
+
+		//Now write arraylist to csv file again
+		try {
+			FileWriter csvWriter = new FileWriter("src\\main\\resources\\metadata.csv");
+			csvWriter.append("");  //to clear csv file first
+
+			csvWriter = new FileWriter("src\\main\\resources\\metadata.csv", true);
+			//Loop over arraylist
+			for(int i=0; i<arr.size();i++){
+				if(arr.get(i).length==7) {
+					csvWriter.append("\n" + arr.get(i)[0] + "," + arr.get(i)[1] + "," + arr.get(i)[2] + "," + arr.get(i)[3] + "," +
+							arr.get(i)[4] + "," + arr.get(i)[5] + "," + arr.get(i)[6]);
+				}
+			}
+			csvWriter.flush();
+			csvWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
 
 	}
 
