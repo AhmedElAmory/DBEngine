@@ -5,12 +5,17 @@ import java.util.*;
 
 public class DBApp implements DBAppInterface {
 
-	Hashtable<String,ArrayList<Grid>> allIndexes;
+	//Hashtable<String,ArrayList<Grid>> allIndexes;
+	Hashtable<String,Object> allIndexes;
+
 	// Constructor
 	public DBApp() {
-		allIndexes=new Hashtable<String,ArrayList<Grid>>();
+		allIndexes=new Hashtable<String,Object>();
+		allIndexes.put("numberOfIndices",-1);
 		init();
 	}
+
+
 
 	public void init() {
 		//creating the data folder if doesn't exist
@@ -342,8 +347,9 @@ public class DBApp implements DBAppInterface {
 		String[] x = primarycolAndDataType.split(",");
 		String primaryCol = x[0];
 		String primaryDataType = x[1];
-		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType);
-		ArrayList<Grid> a = allIndexes.get(strTableName);
+		int id = (Integer)allIndexes.get("numberOfIndices") +1;
+		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType,id);
+		ArrayList<Grid> a = (ArrayList<Grid>) allIndexes.get(strTableName);
 		if(a==null){
 			a =new ArrayList<Grid>();
 			a.add(index);
@@ -351,6 +357,8 @@ public class DBApp implements DBAppInterface {
 		}else{
 			a.add(index);
 		}
+		allIndexes.put("numberOfIndices",id);
+
 
 		try {
 			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indices.class");

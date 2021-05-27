@@ -39,9 +39,9 @@ public class test {
 //			i.printStackTrace();
 //		}
 
-		test t1 = new test();
-		String[] arr = {"gpa","student_id"};
-		t1.createIndex("transcripts",arr);
+	//	test t1 = new test();
+//		String[] arr = {"gpa","student_id"};
+//		t1.createIndex("transcripts",arr);
 
 		//System.out.println(t1.allIndexes.get("transcripts").get(0).namesAndLevels.get("gpa"));
 
@@ -51,6 +51,19 @@ public class test {
 
 //		System.out.println(t1.allIndexes);
 
+		Hashtable<String,ArrayList<Grid>> allIndexes=new Hashtable<String,ArrayList<Grid>>();
+		String path = "src\\main\\resources\\indices.class";
+		try {
+			FileInputStream fileIn = new FileInputStream(path);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			allIndexes = (Hashtable) in.readObject();
+			in.close();
+			fileIn.close();
+		} catch (IOException | ClassNotFoundException i) {
+			i.printStackTrace();
+		}
+		System.out.println(allIndexes);
+		System.out.println(allIndexes.get("pcs").get(0).namesAndLevels);
 
 
 
@@ -175,35 +188,35 @@ public class test {
 
 	// following method creates one index – either multidimensional
 	// or single dimension depending on the count of column names passed.
-	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
-		String primarycolAndDataType = checkCreateIndexExceptions(strTableName,strarrColName);
-		String[] x = primarycolAndDataType.split(",");
-		String primaryCol = x[0];
-		String primaryDataType = x[1];
-		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType);
-		ArrayList<Grid> a = allIndexes.get(strTableName);
-		if(a==null){
-			a =new ArrayList<Grid>();
-			a.add(index);
-			allIndexes.put(strTableName,a);
-		}else{
-			a.add(index);
-		}
-
-		try {
-			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indices.class");
-			ObjectOutputStream out = new ObjectOutputStream(fileOut);
-			out.writeObject(allIndexes);
-			out.close();
-			fileOut.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		//After creating an index we have to edit the metadata to indicate that an index is created on specific columns
-		updateCSV(strTableName,strarrColName);
-
-	}
+//	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
+//		String primarycolAndDataType = checkCreateIndexExceptions(strTableName,strarrColName);
+//		String[] x = primarycolAndDataType.split(",");
+//		String primaryCol = x[0];
+//		String primaryDataType = x[1];
+//		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType);
+//		ArrayList<Grid> a = allIndexes.get(strTableName);
+//		if(a==null){
+//			a =new ArrayList<Grid>();
+//			a.add(index);
+//			allIndexes.put(strTableName,a);
+//		}else{
+//			a.add(index);
+//		}
+//
+//		try {
+//			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indices.class");
+//			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+//			out.writeObject(allIndexes);
+//			out.close();
+//			fileOut.close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//
+//		//After creating an index we have to edit the metadata to indicate that an index is created on specific columns
+//		updateCSV(strTableName,strarrColName);
+//
+//	}
 
 	public static void updateCSV( String strTableName, String[] strarrColName)  {
 

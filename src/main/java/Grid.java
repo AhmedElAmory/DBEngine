@@ -9,18 +9,18 @@ public class Grid implements Serializable {
 	private String tableName;
 	private Object[] array;
 	private Range[][] ranges;
-	private Hashtable<String,Integer> namesAndLevels;
+	 Hashtable<String,Integer> namesAndLevels;
 	private Hashtable<String,String> namesAndDataTypes;
 	private String primaryColumn;
 	private String primaryDataType;
 	
-	public Grid(String tableName,String[] strarrColName,String primaryColumn,String primaryDataType) {
+	public Grid(String tableName,String[] strarrColName,String primaryColumn,String primaryDataType, int indexId) {
+		this.indexId=indexId;
 		this.tableName=tableName;
 		this.primaryColumn=primaryColumn;
 		this.primaryDataType=primaryDataType;
 		this.namesAndLevels = new Hashtable<String,Integer>();
 		this.namesAndDataTypes = new Hashtable<String,String>();
-		this.indexId=getLastgridId()+1;
 
 		for(int i=0;i<strarrColName.length;i++) {
 			namesAndLevels.put(strarrColName[i], i);
@@ -37,40 +37,10 @@ public class Grid implements Serializable {
 	public String toString() {
 		return "Grid{" +
 				"indexId=" + indexId +
-				", tableName='" + tableName + '\'' +
+				", namesAndLevels=" + namesAndLevels +
 				'}';
 	}
 
-	public int getLastgridId(){
-
-		File dir = new File("src\\main\\resources\\indicesAndBuckets");
-		File[] directoryListing = dir.listFiles();
-		int last =-1;
-		if(directoryListing!=null){
-			for(File page : directoryListing){
-
-				String tableName="";
-				int c =0;
-				while(page.getName().charAt(c)!='{'){
-					tableName = tableName + page.getName().charAt(c);
-					c++;
-				}
-				if(tableName.equals("B"+this.tableName)){
-					String id = "";
-					c++;
-					while(page.getName().charAt(c)!='}'){
-						id = id + page.getName().charAt(c);
-						c++;
-					}
-					int test = Integer.parseInt(id);
-					if(test>last){
-						last=test;
-					}
-				}
-			}
-		}
-		return last;
-	}
 
 	public void goDeeper(Object[] array, int n) {
 		if(n==0) {
@@ -80,7 +50,6 @@ public class Grid implements Serializable {
 			array[i]=new Object[11];
 			goDeeper((Object[])array[i],n-1);
 		}
-		
 	}
 	
 	public void getRanges() {
@@ -109,9 +78,6 @@ public class Grid implements Serializable {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		
-			
-			
 		}
 	}
 	
@@ -209,10 +175,6 @@ public class Grid implements Serializable {
 				}
 			}
 		}
-
-
-
-
 
 	}
 
@@ -424,7 +386,7 @@ public class Grid implements Serializable {
 						}
 					}
 				}
-				//colLevelAndDivision.put(level,mid);
+				colLevelAndDivision.put(level,mid);
 			}
 		}
 		return colLevelAndDivision;
