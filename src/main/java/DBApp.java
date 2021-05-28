@@ -5,7 +5,6 @@ import java.util.*;
 
 public class DBApp implements DBAppInterface {
 
-	//Hashtable<String,ArrayList<Grid>> allIndexes;
 	Hashtable<String,Object> allIndexes;
 
 	// Constructor
@@ -30,7 +29,7 @@ public class DBApp implements DBAppInterface {
 			boolean bool = file.mkdir();
 		}
 
-		//Read indices into memory
+		//Read indices into memory if exists
 		String path = "src\\main\\resources\\indices.class";
 		if(new File(path).exists()){
 			try {
@@ -138,6 +137,8 @@ public class DBApp implements DBAppInterface {
 		}
 	}
 
+
+
 	// following method updates one row only
 	// htblColNameValue holds the key and new value
 	// htblColNameValue will not include clustering key as column name
@@ -225,6 +226,16 @@ public class DBApp implements DBAppInterface {
 
 	}
 
+
+	public  void getBestIndexToUse(String strTableName, Hashtable<String, Object> htblColNameValue){
+
+		ArrayList<Grid> currentIndicesOfTable = (ArrayList<Grid>) this.allIndexes.get(strTableName);
+		if(currentIndicesOfTable==null){
+			return;
+		}
+
+	}
+
 	// following method could be used to delete one or more rows.
 	// htblColNameValue holds the key and value. This will be used in search
 	// to identify which rows/tuples to delete.
@@ -232,6 +243,10 @@ public class DBApp implements DBAppInterface {
 	public void deleteFromTable(String strTableName, Hashtable<String, Object> htblColNameValue) throws DBAppException {
 		// Check constraints
 		String PrimaryKey = checkDeleteConstraints(strTableName, htblColNameValue);
+
+		//(M2) First check for usable indices
+
+
 
 		// Check if PrimaryKey exists
 		if (PrimaryKey.equals("")) {
@@ -251,7 +266,7 @@ public class DBApp implements DBAppInterface {
 				int start = 0;
 				int end = pageVector.size() - 1;
 
-				// Binary Search to get the page
+				// Binary Search to get the row
 				while (start <= end) {
 					int mid = (start + end) / 2;
 
@@ -343,20 +358,39 @@ public class DBApp implements DBAppInterface {
 	// following method creates one index – either multidimensional
 	// or single dimension depending on the count of column names passed.
 	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
+
 		String primarycolAndDataType = checkCreateIndexExceptions(strTableName,strarrColName);
+
 		String[] x = primarycolAndDataType.split(",");
 		String primaryCol = x[0];
 		String primaryDataType = x[1];
-		int id = (Integer)allIndexes.get("numberOfIndices") +1;
-		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType,id);
-		ArrayList<Grid> a = (ArrayList<Grid>) allIndexes.get(strTableName);
-		if(a==null){
-			a =new ArrayList<Grid>();
-			a.add(index);
-			allIndexes.put(strTableName,a);
+
+		int id = (Integer)allIndexes.get("numberOfIndices") +1;  // To be able to identify each index
+		Grid newIndex = new Grid(strTableName,strarrColName,primaryCol,primaryDataType,id);
+		ArrayList<Grid> currentIndicesOfTable = (ArrayList<Grid>) allIndexes.get(strTableName);
+		if(currentIndicesOfTable==null){ //(No indices exist for this table)
+			currentIndicesOfTable =new ArrayList<Grid>();
+			currentIndicesOfTable.add(newIndex);
+			allIndexes.put(strTableName,currentIndicesOfTable);
 		}else{
-			a.add(index);
+			//First check if there exist an index with same columns
+			for(int i=0; i<currentIndicesOfTable.size();i++){
+				Hashtable<String,Integer> namesAndLevels=currentIndicesOfTable.get(i).namesAndLevels;
+				int countOfSameColumns=0;
+				for(int j=0; j<strarrColName.length;j++){
+					if(namesAndLevels.containsKey(strarrColName[j])){
+						countOfSameColumns++;
+					}
+				}
+				if(countOfSameColumns==namesAndLevels.size()){ //i.e same index
+					throw new DBAppException("This index already exists!");
+				}
+			}
+
+			currentIndicesOfTable.add(newIndex);
 		}
+
+		//to update indices count
 		allIndexes.put("numberOfIndices",id);
 
 

@@ -14,6 +14,19 @@ public class test {
 	public test(){
 
 		allIndexes =  new Hashtable<String,ArrayList<Grid>>();
+		//Read indices into memory
+		String path = "src\\main\\resources\\indices.class";
+		if(new File(path).exists()){
+			try {
+				FileInputStream fileIn = new FileInputStream(path);
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+				this.allIndexes = (Hashtable) in.readObject();
+				in.close();
+				fileIn.close();
+			} catch (IOException | ClassNotFoundException i) {
+				i.printStackTrace();
+			}
+		}
 	}
 
 	public static void main(String[] args) throws DBAppException {
@@ -39,31 +52,34 @@ public class test {
 //			i.printStackTrace();
 //		}
 
-	//	test t1 = new test();
+		test t1 = new test();
 //		String[] arr = {"gpa","student_id"};
 //		t1.createIndex("transcripts",arr);
 
 		//System.out.println(t1.allIndexes.get("transcripts").get(0).namesAndLevels.get("gpa"));
 
 //		Vector<BucketItem> page = new Vector<BucketItem>();
-//		page=DBApp.readBucketIntoVector("Btranscripts[0][4](0).class");
+//		page=DBApp.readBucketIntoVector("Bstudents{2}[0][0](0).class");
 //		System.out.println(page);
-
+//		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].max);
+//		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].min);
+////
 //		System.out.println(t1.allIndexes);
+		System.out.println(t1.allIndexes.get("fddf"));
 
-		Hashtable<String,ArrayList<Grid>> allIndexes=new Hashtable<String,ArrayList<Grid>>();
-		String path = "src\\main\\resources\\indices.class";
-		try {
-			FileInputStream fileIn = new FileInputStream(path);
-			ObjectInputStream in = new ObjectInputStream(fileIn);
-			allIndexes = (Hashtable) in.readObject();
-			in.close();
-			fileIn.close();
-		} catch (IOException | ClassNotFoundException i) {
-			i.printStackTrace();
-		}
-		System.out.println(allIndexes);
-		System.out.println(allIndexes.get("pcs").get(0).namesAndLevels);
+//		Hashtable<String,ArrayList<Grid>> allIndexes=new Hashtable<String,ArrayList<Grid>>();
+//		String path = "src\\main\\resources\\indices.class";
+//		try {
+//			FileInputStream fileIn = new FileInputStream(path);
+//			ObjectInputStream in = new ObjectInputStream(fileIn);
+//			allIndexes = (Hashtable) in.readObject();
+//			in.close();
+//			fileIn.close();
+//		} catch (IOException | ClassNotFoundException i) {
+//			i.printStackTrace();
+//		}
+//		System.out.println(allIndexes);
+//		System.out.println(allIndexes.get("pcs").get(0).namesAndLevels);
 
 
 

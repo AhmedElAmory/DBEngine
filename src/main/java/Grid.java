@@ -8,7 +8,7 @@ public class Grid implements Serializable {
 	private int indexId;
 	private String tableName;
 	private Object[] array;
-	private Range[][] ranges;
+	 Range[][] ranges;
 	 Hashtable<String,Integer> namesAndLevels;
 	private Hashtable<String,String> namesAndDataTypes;
 	private String primaryColumn;
@@ -183,10 +183,7 @@ public class Grid implements Serializable {
 		Set<String> indexColumnsSet = this.namesAndLevels.keySet();
 		ArrayList<String> indexColumnsArray = new ArrayList<String>(indexColumnsSet.size());
 		indexColumnsArray.addAll(indexColumnsSet);
-		//If the index has a non-clustering key, we have to loop over every record on the table
-		// and see where each record belongs in the index using binary search over the ranges
 
-		//if(this.namesAndLevels.size()>1){  	//If we have more than one column then the index is secondary
 
 			//We will deserialize every page of the table starting from the first page
 			int numberOfPages = DBApp.countNumberOfPagesWithoutOverflows(this.tableName);
@@ -198,13 +195,12 @@ public class Grid implements Serializable {
 				for(int j=0; j<=numberOfOverFlows; j++){
 					Vector<Hashtable<String, Object>> page = DBApp.readPageIntoVector(this.tableName+"["+i+"]("+j+").class");
 
-					//To loop inside the page
+					//To loop on rows inside the page
 					for(int k=0; k<page.size(); k++){
 						insertIntoGrid(page.get(k), this.tableName+"["+i+"]("+j+").class");
 					}
 				}
 			}
-		//}
 	}
 
 	public void insertIntoGrid(Hashtable<String,Object> row,String pageName){
