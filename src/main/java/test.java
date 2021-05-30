@@ -61,11 +61,11 @@ public class test {
 //		Vector<BucketItem> page = new Vector<BucketItem>();
 //		page=DBApp.readBucketIntoVector("Bstudents{2}[0][0](0).class");
 //		System.out.println(page);
-//		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].max);
-//		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].min);
+		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].max);
+		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].min);
 ////
 //		System.out.println(t1.allIndexes);
-		System.out.println(t1.allIndexes.get("fddf"));
+	//	System.out.println(t1.allIndexes);
 
 //		Hashtable<String,ArrayList<Grid>> allIndexes=new Hashtable<String,ArrayList<Grid>>();
 //		String path = "src\\main\\resources\\indices.class";

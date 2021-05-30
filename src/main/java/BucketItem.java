@@ -8,11 +8,11 @@ public class BucketItem implements Serializable {
 	 String pageName;
 
 
-	public BucketItem(Hashtable<String,Object> colNamesAndValues, String pageName,Object primaryKeyValye) {
+	public BucketItem(Hashtable<String,Object> colNamesAndValues, String pageName,Object primaryKeyValue) {
 		
 		this.colNamesAndValues=colNamesAndValues;
 		this.pageName=pageName;
-		this.primaryKeyValue=primaryKeyValye;
+		this.primaryKeyValue=primaryKeyValue;
 	}
 
 	@Override

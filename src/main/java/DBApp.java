@@ -138,7 +138,6 @@ public class DBApp implements DBAppInterface {
 	}
 
 
-
 	// following method updates one row only
 	// htblColNameValue holds the key and new value
 	// htblColNameValue will not include clustering key as column name
@@ -360,33 +359,36 @@ public class DBApp implements DBAppInterface {
 	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
 
 		String primarycolAndDataType = checkCreateIndexExceptions(strTableName,strarrColName);
+		ArrayList<Grid> currentIndicesOfTable = (ArrayList<Grid>) allIndexes.get(strTableName);
+
+		//First check if there exist an index with same columns
+		if(currentIndicesOfTable!=null) {
+			for (int i = 0; i < currentIndicesOfTable.size(); i++) {
+				Hashtable<String, Integer> namesAndLevels = currentIndicesOfTable.get(i).namesAndLevels;
+				int countOfSameColumns = 0;
+				for (int j = 0; j < strarrColName.length; j++) {
+					if (namesAndLevels.containsKey(strarrColName[j])) {
+						countOfSameColumns++;
+					}
+				}
+				if (countOfSameColumns == namesAndLevels.size()) { //i.e same index
+					throw new DBAppException("This index already exists!");
+				}
+			}
+		}
 
 		String[] x = primarycolAndDataType.split(",");
 		String primaryCol = x[0];
 		String primaryDataType = x[1];
-
 		int id = (Integer)allIndexes.get("numberOfIndices") +1;  // To be able to identify each index
 		Grid newIndex = new Grid(strTableName,strarrColName,primaryCol,primaryDataType,id);
-		ArrayList<Grid> currentIndicesOfTable = (ArrayList<Grid>) allIndexes.get(strTableName);
+
+
 		if(currentIndicesOfTable==null){ //(No indices exist for this table)
 			currentIndicesOfTable =new ArrayList<Grid>();
 			currentIndicesOfTable.add(newIndex);
 			allIndexes.put(strTableName,currentIndicesOfTable);
 		}else{
-			//First check if there exist an index with same columns
-			for(int i=0; i<currentIndicesOfTable.size();i++){
-				Hashtable<String,Integer> namesAndLevels=currentIndicesOfTable.get(i).namesAndLevels;
-				int countOfSameColumns=0;
-				for(int j=0; j<strarrColName.length;j++){
-					if(namesAndLevels.containsKey(strarrColName[j])){
-						countOfSameColumns++;
-					}
-				}
-				if(countOfSameColumns==namesAndLevels.size()){ //i.e same index
-					throw new DBAppException("This index already exists!");
-				}
-			}
-
 			currentIndicesOfTable.add(newIndex);
 		}
 

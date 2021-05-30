@@ -30,6 +30,7 @@ public class Grid implements Serializable {
 		
 		ranges = new Range[strarrColName.length][10];
 		getRanges();
+
 		populateIndex();
 	}
 
@@ -180,10 +181,9 @@ public class Grid implements Serializable {
 
 
 	public void populateIndex(){
-		Set<String> indexColumnsSet = this.namesAndLevels.keySet();
-		ArrayList<String> indexColumnsArray = new ArrayList<String>(indexColumnsSet.size());
-		indexColumnsArray.addAll(indexColumnsSet);
 
+		ArrayList<String> indexColumnsArray = new ArrayList<String>();
+		indexColumnsArray.addAll(this.namesAndLevels.keySet());
 
 			//We will deserialize every page of the table starting from the first page
 			int numberOfPages = DBApp.countNumberOfPagesWithoutOverflows(this.tableName);
@@ -205,16 +205,14 @@ public class Grid implements Serializable {
 
 	public void insertIntoGrid(Hashtable<String,Object> row,String pageName){
 
-		Set<String> indexColumnsSet = this.namesAndLevels.keySet();
-		ArrayList<String> indexColumnsArray = new ArrayList<String>(indexColumnsSet.size());
-		indexColumnsArray.addAll(indexColumnsSet);
-
+		ArrayList<String> indexColumnsArray = new ArrayList<String>();
+		indexColumnsArray.addAll( this.namesAndLevels.keySet());
 
 		//To get a hashtable of values of needed columns (columns of the index)
 		Hashtable<String,Object> colNameAndValue = new Hashtable<String,Object>();
+
 		for(int i=0; i<indexColumnsArray.size(); i++){
-			Object value = row.get(indexColumnsArray.get(i));
-			colNameAndValue.put(indexColumnsArray.get(i),value);
+			colNameAndValue.put(indexColumnsArray.get(i),row.get(indexColumnsArray.get(i)));
 		}
 
 		//To get value of priamarykey
@@ -344,9 +342,10 @@ public class Grid implements Serializable {
 	public Hashtable<Integer,Integer> getPositionInGrid(Hashtable<String,Object> colNameAndValue){
 
 		Hashtable<Integer,Integer> colLevelAndDivision = new Hashtable<Integer,Integer>();
-		Set<String> indexColumnsSet = this.namesAndLevels.keySet();
-		ArrayList<String> indexColumnsArray = new ArrayList<String>(indexColumnsSet.size());
-		indexColumnsArray.addAll(indexColumnsSet);
+
+		ArrayList<String> indexColumnsArray = new ArrayList<String>();
+		indexColumnsArray.addAll(this.namesAndLevels.keySet());
+
 
 		for(int i=0; i<indexColumnsArray.size(); i++){
 			int level = namesAndLevels.get(indexColumnsArray.get(i));
