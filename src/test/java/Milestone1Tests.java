@@ -574,7 +574,6 @@ public class Milestone1Tests {
 
             row.put("gpa", gpa);
 
-            
             dbApp.insertIntoTable("students", row);
             row.clear();
             if (limit != -1) {

@@ -5,14 +5,14 @@ import java.util.*;
 
 public class Grid implements Serializable {
 
-	private int indexId;
-	private String tableName;
-	private Object[] array;
-	 Range[][] ranges;
-	 Hashtable<String,Integer> namesAndLevels;
-	private Hashtable<String,String> namesAndDataTypes;
-	private String primaryColumn;
-	private String primaryDataType;
+	public int indexId;
+	public String tableName;
+	public Object[] array;
+	Range[][] ranges;
+	Hashtable<String,Integer> namesAndLevels;
+	public Hashtable<String,String> namesAndDataTypes;
+	public String primaryColumn;
+	public String primaryDataType;
 	
 	public Grid(String tableName,String[] strarrColName,String primaryColumn,String primaryDataType, int indexId) {
 		this.indexId=indexId;
@@ -41,7 +41,6 @@ public class Grid implements Serializable {
 				", namesAndLevels=" + namesAndLevels +
 				'}';
 	}
-
 
 	public void goDeeper(Object[] array, int n) {
 		if(n==0) {
@@ -179,7 +178,6 @@ public class Grid implements Serializable {
 
 	}
 
-
 	public void populateIndex(){
 
 		ArrayList<String> indexColumnsArray = new ArrayList<String>();
@@ -203,7 +201,9 @@ public class Grid implements Serializable {
 			}
 	}
 
-	public void insertIntoGrid(Hashtable<String,Object> row,String pageName){
+	public boolean insertIntoGrid(Hashtable<String,Object> row,String pageName){
+
+		boolean needToSerializeGrid=false;
 
 		ArrayList<String> indexColumnsArray = new ArrayList<String>();
 		indexColumnsArray.addAll( this.namesAndLevels.keySet());
@@ -212,7 +212,12 @@ public class Grid implements Serializable {
 		Hashtable<String,Object> colNameAndValue = new Hashtable<String,Object>();
 
 		for(int i=0; i<indexColumnsArray.size(); i++){
-			colNameAndValue.put(indexColumnsArray.get(i),row.get(indexColumnsArray.get(i)));
+			
+			Object rowValue = row.get(indexColumnsArray.get(i));
+			if(rowValue!=null) {
+				colNameAndValue.put(indexColumnsArray.get(i),rowValue);
+			}
+			
 		}
 
 		//To get value of priamarykey
@@ -252,7 +257,7 @@ public class Grid implements Serializable {
 
 			//save its name in the grid array
 			currentarray[levelpositions.get(noOfLevels-1)] = bucketFileName+"(0)";
-			
+			needToSerializeGrid=true;
 		}else{
 			// the bucket already exists so insert into last overflow
 			int lastoverflow = getLastOverflowNumber(bucketFileName);
@@ -266,7 +271,7 @@ public class Grid implements Serializable {
 				propsInput = new FileInputStream("src\\main\\resources\\DBApp.config");
 				Properties prop = new Properties();
 				prop.load(propsInput);
-				maxRowsInBucket= Integer.parseInt((String) prop.get("MaximumRowsCountinPage"));
+				maxRowsInBucket= Integer.parseInt((String) prop.get("MaximumKeysCountinIndexBucket"));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -295,9 +300,9 @@ public class Grid implements Serializable {
 				e.printStackTrace();
 			}
 		}
+		return needToSerializeGrid;
 	}
-
-
+	
 	public static int getLastOverflowNumber(String bucketFileName){
 
 		File dir = new File("src\\main\\resources\\indicesAndBuckets");
@@ -320,7 +325,6 @@ public class Grid implements Serializable {
 	return counter;
 	}
 
-
 	public static Vector<BucketItem> readBucketIntoVector(String pageName) {
 		String path = "src\\main\\resources\\indicesAndBuckets\\" + pageName;
 		Vector<BucketItem> v = null;
@@ -337,7 +341,6 @@ public class Grid implements Serializable {
 		}
 		return v;
 	}
-
 
 	public Hashtable<Integer,Integer> getPositionInGrid(Hashtable<String,Object> colNameAndValue){
 
@@ -386,4 +389,45 @@ public class Grid implements Serializable {
 		}
 		return colLevelAndDivision;
 	}
+
+	public void changePageNameInIndex(String newPageName, Hashtable<String,Object> colNameAndValue){
+
+		//Get position of row in grid
+		Hashtable<Integer,Integer> colLevelAndDivision = getPositionInGrid(colNameAndValue);
+		//Get the primarykey of the row
+		Object primaryKeyValue = colNameAndValue.get(primaryColumn);
+		//Get the name of the bucket
+		String bucketName = "B" + tableName + "{" + indexId + "}";
+		for(int i=0 ;i<colLevelAndDivision.size();i++){
+			bucketName = bucketName + "[" + colLevelAndDivision.get(i) + "]";
+		}
+		//Get number of overflows
+		int numOfOverflows = getLastOverflowNumber(bucketName);
+		//Loop on all overflows to find the required row
+		for(int i=0; i<=numOfOverflows; i++){
+			Vector<BucketItem> currentBucket = readBucketIntoVector(bucketName+"("+i+").class");
+			boolean rowFound= false;
+			//Loop on all rows inside the bucket to get the row
+			for(int j=0; j<currentBucket.size(); j++){
+				if(currentBucket.get(j).primaryKeyValue.equals(primaryKeyValue)){ //We found the needed row
+					currentBucket.get(j).pageName=newPageName;
+					//Serialize it
+					try {
+						FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indicesAndBuckets\\"+bucketName+"("+i+").class");
+						ObjectOutputStream out = new ObjectOutputStream(fileOut);
+						out.writeObject(currentBucket);
+						out.close();
+						fileOut.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					rowFound =true;
+					break;
+				}
+				if(rowFound)
+					break;
+			}
+		}
+	}
+
 }

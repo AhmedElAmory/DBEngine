@@ -12,7 +12,6 @@ public class test {
 	Hashtable<String,ArrayList<Grid>> allIndexes;
 
 	public test(){
-
 		allIndexes =  new Hashtable<String,ArrayList<Grid>>();
 		//Read indices into memory
 		String path = "src\\main\\resources\\indices.class";
@@ -31,10 +30,10 @@ public class test {
 
 	public static void main(String[] args) throws DBAppException {
 
-
-
-
-
+//		testing();
+//		hashtableTest();
+		Testing();
+//		testInsertion();
 
 //		Hashtable<String,Object> a = new Hashtable<String,Object>();
 //		a.put("id","1");
@@ -52,7 +51,7 @@ public class test {
 //			i.printStackTrace();
 //		}
 
-		test t1 = new test();
+//		test t1 = new test();
 //		String[] arr = {"gpa","student_id"};
 //		t1.createIndex("transcripts",arr);
 
@@ -61,8 +60,8 @@ public class test {
 //		Vector<BucketItem> page = new Vector<BucketItem>();
 //		page=DBApp.readBucketIntoVector("Bstudents{2}[0][0](0).class");
 //		System.out.println(page);
-		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].max);
-		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].min);
+//		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].max);
+//		System.out.println(t1.allIndexes.get("students").get(1).ranges[0][8].min);
 ////
 //		System.out.println(t1.allIndexes);
 	//	System.out.println(t1.allIndexes);
@@ -201,39 +200,6 @@ public class test {
 		
 	}
 
-
-	// following method creates one index – either multidimensional
-	// or single dimension depending on the count of column names passed.
-//	public void createIndex(String strTableName, String[] strarrColName) throws DBAppException {
-//		String primarycolAndDataType = checkCreateIndexExceptions(strTableName,strarrColName);
-//		String[] x = primarycolAndDataType.split(",");
-//		String primaryCol = x[0];
-//		String primaryDataType = x[1];
-//		Grid index = new Grid(strTableName,strarrColName,primaryCol,primaryDataType);
-//		ArrayList<Grid> a = allIndexes.get(strTableName);
-//		if(a==null){
-//			a =new ArrayList<Grid>();
-//			a.add(index);
-//			allIndexes.put(strTableName,a);
-//		}else{
-//			a.add(index);
-//		}
-//
-//		try {
-//			FileOutputStream fileOut = new FileOutputStream("src\\main\\resources\\indices.class");
-//			ObjectOutputStream out = new ObjectOutputStream(fileOut);
-//			out.writeObject(allIndexes);
-//			out.close();
-//			fileOut.close();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//
-//		//After creating an index we have to edit the metadata to indicate that an index is created on specific columns
-//		updateCSV(strTableName,strarrColName);
-//
-//	}
-
 	public static void updateCSV( String strTableName, String[] strarrColName)  {
 
 		ArrayList<String> listOfCol = new ArrayList<String>();
@@ -362,4 +328,259 @@ public class test {
 			}
 		}
 	}
+	
+	public static void testing() {
+		ArrayList<String> operatorsList = new ArrayList<>();
+		operatorsList.add("XOR");
+		operatorsList.add("XOR");
+		operatorsList.add("AND");
+		operatorsList.add("OR");
+		operatorsList.add("OR");
+		operatorsList.add("XOR");
+		operatorsList.add("OR");
+		operatorsList.add("XOR");
+		operatorsList.add("AND");
+		operatorsList.add("AND");
+		operatorsList.add("OR");
+		operatorsList.add("XOR");
+		operatorsList.add("OR");
+		operatorsList.add("AND");
+		operatorsList.add("AND");
+		operatorsList.add("XOR");
+		System.out.println(operatorsList);
+		ArrayList<String> collection = new ArrayList<>();
+		collection.add("AND");
+		operatorsList.removeAll(collection);
+		System.out.println(operatorsList);
+	}
+	
+	public static void hashtableTest() {
+
+	    Hashtable<String, Integer> hashtable = new Hashtable<String, Integer>();
+	    Hashtable<String, Integer> hashtable2 = new Hashtable<String, Integer>();
+
+	    hashtable.put("mike" , 1);
+	    hashtable.put("Lisa" ,2);
+	    hashtable.put("Louis" , 3);
+	    hashtable.put("Chris" ,4);
+	    hashtable.put("Chuck" , 5);
+	    hashtable.put("Kiril" ,6);
+
+	    /* table 2 values */    
+	    hashtable2.put("Louis" , 1);
+	    hashtable2.put("samy" ,2);
+	    hashtable2.put("Mo" , 3);
+	    hashtable2.put("lolo" , 4);
+	    hashtable2.put("Chuck" ,5);
+	    hashtable2.put("samual" ,6);
+	    
+	    Hashtable<String, Integer> inersect = new Hashtable<String, Integer>(hashtable);
+	    inersect.keySet().retainAll(hashtable2.keySet());
+	    System.out.println(inersect);
+	    
+	    //min index 0;
+	    //max index 10;
+	    //check if there is a constraint on the greater than or less than and modify the min and max index
+	    //go into all the blocks between the two ranges
+	    //go to the two ranges but make sure to go lineary through them at the end to check for the greater than or less than constraints
+	}
+	
+	public static void Testing() throws DBAppException {
+		DBApp amory=new DBApp();
+		
+//		for(Grid x :(ArrayList<Grid>)amory.allIndexes.get("students")) {
+//			System.out.println(x.toString());
+//		}
+		
+		//System.out.println(amory.readBucketIntoVector("BAmory{0}[0](0).class"));
+//		createTableTest(amory);
+//		insertDataTest(amory);
+		createIndexTest(amory);
+//		updateTest(amory);
+//		insertTest(amory);
+		//deleteTest(amory);
+//	selectTest(amory);
+//		System.out.println(amory.readBucketIntoVector("BAmory{0}[0](0).class"));
+		
+//		Hashtable<String, Object> a = new Hashtable<>();
+//		a.put("asas", null);
+	}
+	
+	public static void createTableTest(DBApp app) throws DBAppException {
+		Hashtable<String,String> htblColNameType = new Hashtable();
+		htblColNameType.put("id", "java.lang.Integer");
+		htblColNameType.put("name", "java.lang.String");
+		htblColNameType.put("gpa", "java.lang.Double");
+		
+		Hashtable<String,String> htblColNameMin = new Hashtable();
+		htblColNameMin.put("id", "1");
+		htblColNameMin.put("name", "AAAAA");
+		htblColNameMin.put("gpa", "0.7");
+		
+		Hashtable<String,String> htblColNameMax = new Hashtable();
+		htblColNameMax.put("id", "999999999");
+		htblColNameMax.put("name", "zzzzzzzzz");
+		htblColNameMax.put("gpa", "5.0");
+		app.createTable("Amory", "id", htblColNameType, htblColNameMin, htblColNameMax);
+	}
+	
+	public static void insertDataTest(DBApp app) throws DBAppException {
+		Hashtable<String,Object> htblColNameValue = new Hashtable( );
+		
+		htblColNameValue.put("id", new Integer( 2343432 ));
+		htblColNameValue.put("name", new String("Ahmed Noor" ) );
+		htblColNameValue.put("gpa", new Double( 0.95 ) );
+		
+		app.insertIntoTable( "Amory" , htblColNameValue );
+		
+		htblColNameValue.clear( );
+		htblColNameValue.put("id", new Integer( 453455 ));
+		htblColNameValue.put("name", new String("Ahmed Noor" ) );
+		htblColNameValue.put("gpa", new Double( 0.95 ) );
+		
+		app.insertIntoTable( "Amory" , htblColNameValue );
+		
+		htblColNameValue.clear( );
+		htblColNameValue.put("id", new Integer( 5674567 ));
+		htblColNameValue.put("name", new String("Dalia Noor" ) );
+		htblColNameValue.put("gpa", new Double( 1.25 ) );
+		
+		app.insertIntoTable( "Amory" , htblColNameValue );
+		
+		htblColNameValue.clear( );
+		htblColNameValue.put("id", new Integer( 23498 ));
+		htblColNameValue.put("name", new String("John Noor" ) );
+		htblColNameValue.put("gpa", new Double( 1.5 ) );
+		
+		app.insertIntoTable( "Amory" , htblColNameValue );
+		
+		htblColNameValue.clear( );
+		htblColNameValue.put("id", new Integer( 78452 ));
+		htblColNameValue.put("name", new String("Zaky Noor" ) );
+		htblColNameValue.put("gpa", new Double( 0.88 ) );
+		
+		app.insertIntoTable( "Amory" , htblColNameValue );
+	}
+	
+	public static void createIndexTest(DBApp app) throws DBAppException {
+
+		String[] arr={"gpa"};
+		app.createIndex("Amory", arr);
+	}
+	
+	public static void selectTest(DBApp app) throws DBAppException{
+		SQLTerm term1 = new SQLTerm();
+		SQLTerm term2 = new SQLTerm();
+		SQLTerm term3 = new SQLTerm();
+		SQLTerm term4 = new SQLTerm();
+		SQLTerm term5 = new SQLTerm();
+		
+		term1._strTableName = "Amory";
+		term1._strColumnName= "id";
+		term1._strOperator = ">=";
+		term1._objValue = new Integer( 1 );
+		
+//		term2._strTableName = "Amory";
+//		term2._strColumnName= "name";
+//		term2._strOperator = "<=";
+//		term2._objValue = "John Noor";
+		
+//		term2._strTableName = "Amory";
+//		term2._strColumnName= "gpa";
+//		term2._strOperator = "=";
+//		term2._objValue = new Double( 0.95 );
+		
+//		term3._strTableName = "Amory";
+//		term3._strColumnName= "id";
+//		term3._strOperator = "=";
+//		term3._objValue = new Integer( 78452 );
+		
+		SQLTerm[] arrSQLTerms= {term1};
+		
+		String[]strarrOperators = {};
+		
+		Iterator resultSet = app.selectFromTable(arrSQLTerms , strarrOperators);
+		if(resultSet==null) {
+			System.out.println("null");
+		}else {
+			if(resultSet.hasNext()) {
+				while(resultSet.hasNext()) {
+					System.out.println(resultSet.next());
+				}
+			}else {
+				System.out.println("This is an empty result set");
+			}
+		}
+	
+	}
+	
+	public static void updateTest(DBApp app) throws DBAppException{
+		Hashtable<String,Object> htblColNameValue = new Hashtable<>();
+		htblColNameValue.put("gpa", new Double( 1.5 ));
+		app.updateTable("Amory", "78452" , htblColNameValue);
+		
+		
+	}
+
+	
+	public static void insertTest(DBApp app) throws DBAppException{
+		Hashtable<String,Object> row3 = new Hashtable<>();
+		row3.put("id",233);
+		app.insertIntoTable("Amory",row3);
+	}
+
+	public static void testInsertion() throws DBAppException {
+
+		DBApp db = new DBApp();
+
+//	Hashtable<String,String> colNameType = new Hashtable<>();
+//	colNameType.put("id","java.lang.Integer");
+//	colNameType.put("name","java.lang.String");
+//	colNameType.put("age","java.lang.Integer");
+//
+//	Hashtable<String,String> colNameMin = new Hashtable<>();
+//	colNameMin.put("id","0");
+//	colNameMin.put("name","AAAAAA");
+//	colNameMin.put("age","0");
+//
+//	Hashtable<String,String> colNameMax = new Hashtable<>();
+//	colNameMax.put("id","999");
+//	colNameMax.put("name","zzzzzz");
+//	colNameMax.put("age","999");
+//
+//	db.createTable("students","id",colNameType,colNameMin,colNameMax);
+//
+//	String[] aa = {"id"};
+//	db.createIndex("students",aa);
+
+	Hashtable<String,Object> row3 = new Hashtable<>();
+	row3.put("id",19);
+	row3.put("name","aka");
+	row3.put("age",66);
+	db.insertIntoTable("students",row3);
+	//db.deleteFromTable("students",row3);
+
+//	1-5-10-20-35-15-27-21-19-34-0-29-4-14-9-13
+	System.out.println(DBApp.readPageIntoVector("students[1](0).class"));
+//	System.out.println(DBApp.readPageIntoVector("students[1](1).class"));
+//	System.out.println(DBApp.readPageIntoVector("students[1](2).class"));
+//	System.out.println(DBApp.readPageIntoVector("students[2](0).class"));
+//	System.out.println(DBApp.readPageIntoVector("students[3](0).class"));
+	System.out.println(Grid.readBucketIntoVector("Bstudents{1}[0](0).class"));
+//	System.out.println(Grid.readBucketIntoVector("Bstudents{0}[0](1).class"));
+//	System.out.println(Grid.readBucketIntoVector("Bstudents{0}[0](2).class"));
+//	System.out.println(Grid.readBucketIntoVector("Bstudents{0}[0](3).class"));
+	}
+
+	
+	public static void deleteTest(DBApp app) throws DBAppException{
+		Hashtable<String,Object> htblColNameValue = new Hashtable( );
+		
+		htblColNameValue.put("id", 233 );
+		app.deleteFromTable("Amory", htblColNameValue);
+	}
 }
+
+
+
+

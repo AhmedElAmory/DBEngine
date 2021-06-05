@@ -1,11 +1,13 @@
 import org.junit.jupiter.api.*;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Iterator;
-
+import java.util.stream.Collectors;
 
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -13,6 +15,51 @@ public class Milestone2Tests {
 
     @Test
     @Order(1)
+    public void testClearMetaDataFile() throws Exception {
+
+        String metaFilePath = "src/main/resources/metadata.csv";
+        File metaFile = new File(metaFilePath);
+
+        if (!metaFile.exists()) {
+            throw new Exception("`metadata.csv` in Resources folder does not exist");
+        }
+
+        PrintWriter writer = new PrintWriter(metaFile);
+        writer.write("");
+        writer.close();
+    }
+
+    @Test
+    @Order(2)
+    public void testDataDirectory() throws Exception {
+        DBApp dbApp = new DBApp();
+        dbApp.init();
+
+        String dataDirPath = "src/main/resources/data";
+        File dataDir = new File(dataDirPath);
+
+        if (!dataDir.isDirectory() || !dataDir.exists()) {
+            throw new Exception("`data` Directory in Resources folder does not exist");
+        }
+
+        ArrayList<String> files = new ArrayList<>();
+        try {
+            files = Files.walk(Paths.get(dataDirPath))
+                    .map(f -> f.toAbsolutePath().toString())
+                    .filter(p -> !Files.isDirectory(Paths.get(p)))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+//        System.out.println(files);
+        for (String file : files) {
+            Files.delete(Paths.get(file));
+        }
+    }
+
+    @Test
+    @Order(3)
     public void testTableCreation() throws Exception {
         DBApp dbApp = new DBApp();
         dbApp.init();
@@ -26,7 +73,7 @@ public class Milestone2Tests {
     }
 
     @Test
-    @Order(2)
+    @Order(4)
     public void testRecordInsertions() throws Exception {
         DBApp dbApp = new DBApp();
         dbApp.init();
@@ -117,147 +164,147 @@ public class Milestone2Tests {
         dbApp = null;
     }
 
-//    @Test
-//    public void testSelectEmptyStudents() throws Exception{
-//        // Should return an empty iterator with no errors thrown
-//
-//        SQLTerm[] arrSQLTerms;
-//        arrSQLTerms = new SQLTerm[2];
-//        arrSQLTerms[0] = new SQLTerm();
-//        arrSQLTerms[0]._strTableName = "students";
-//        arrSQLTerms[0]._strColumnName= "first_name";
-//        arrSQLTerms[0]._strOperator = "=";
-//        arrSQLTerms[0]._objValue ="John";
-//
-//        arrSQLTerms[1] = new SQLTerm();
-//        arrSQLTerms[1]._strTableName = "students";
-//        arrSQLTerms[1]._strColumnName= "gpa";
-//        arrSQLTerms[1]._strOperator = "=";
-//        arrSQLTerms[1]._objValue = new Double(0.7);
-//
-//        String[]strarrOperators = new String[1];
-//        strarrOperators[0] = "AND";
-//
-//        DBApp dbApp = new DBApp();
-//        dbApp.init();
-//        Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
-//    }
+    @Test
+    public void testSelectEmptyStudents() throws Exception{
+        // Should return an empty iterator with no errors thrown
 
-//    @Test
-//    public void testSelectActualStudentOR() throws Exception{
-//        // Should return a non-empty iterator with no errors thrown
-//
-//        BufferedReader studentsTable = new BufferedReader(new FileReader("src/main/resources/students_table.csv"));
-//        String record;
-//        int c = 0;
-//        int finalLine = 1;
-//        Hashtable<String, Object> row = new Hashtable();
-//
-//
-//        while ((record = studentsTable.readLine()) != null && c <= finalLine) {
-//            if (c == finalLine) {
-//                String[] fields = record.split(",");
-//                row.put("id", fields[0]);
-//                row.put("first_name", fields[1]);
-//                row.put("last_name", fields[2]);
-//
-//                int year = Integer.parseInt(fields[3].trim().substring(0, 4));
-//                int month = Integer.parseInt(fields[3].trim().substring(5, 7));
-//                int day = Integer.parseInt(fields[3].trim().substring(8));
-//
-//
-//                Date dob = new Date(year - 1900, month - 1, day);
-//                row.put("dob", dob);
-//
-//                double gpa = Double.parseDouble(fields[4].trim());
-//
-//                row.put("gpa", gpa);
-//
-//            }
-//            c++;
-//        }
-//        studentsTable.close();
-//
-//
-//        SQLTerm[] arrSQLTerms;
-//        arrSQLTerms = new SQLTerm[2];
-//        arrSQLTerms[0] = new SQLTerm();
-//        arrSQLTerms[0]._strTableName = "students";
-//        arrSQLTerms[0]._strColumnName= "first_name";
-//        arrSQLTerms[0]._strOperator = "=";
-//        arrSQLTerms[0]._objValue =row.get("first_name");
-//
-//        arrSQLTerms[1] = new SQLTerm();
-//        arrSQLTerms[1]._strTableName = "students";
-//        arrSQLTerms[1]._strColumnName= "gpa";
-//        arrSQLTerms[1]._strOperator = "<=";
-//        arrSQLTerms[1]._objValue = row.get("gpa");
-//
-//        String[]strarrOperators = new String[1];
-//        strarrOperators[0] = "OR";
-//
-//        DBApp dbApp = new DBApp();
-//        dbApp.init();
-//        Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
-//    }
+        SQLTerm[] arrSQLTerms;
+        arrSQLTerms = new SQLTerm[2];
+        arrSQLTerms[0] = new SQLTerm();
+        arrSQLTerms[0]._strTableName = "students";
+        arrSQLTerms[0]._strColumnName= "first_name";
+        arrSQLTerms[0]._strOperator = "=";
+        arrSQLTerms[0]._objValue ="John";
 
-//    @Test
-//    public void testSelectActualStudentAND() throws Exception{
-//        // Should return a non-empty iterator with no errors thrown
-//
-//        BufferedReader studentsTable = new BufferedReader(new FileReader("src/main/resources/students_table.csv"));
-//        String record;
-//        int c = 0;
-//        int finalLine = 1;
-//        Hashtable<String, Object> row = new Hashtable();
-//
-//
-//        while ((record = studentsTable.readLine()) != null && c <= finalLine) {
-//            if (c == finalLine) {
-//                String[] fields = record.split(",");
-//                row.put("id", fields[0]);
-//                row.put("first_name", fields[1]);
-//                row.put("last_name", fields[2]);
-//
-//                int year = Integer.parseInt(fields[3].trim().substring(0, 4));
-//                int month = Integer.parseInt(fields[3].trim().substring(5, 7));
-//                int day = Integer.parseInt(fields[3].trim().substring(8));
-//
-//
-//                Date dob = new Date(year - 1900, month - 1, day);
-//                row.put("dob", dob);
-//
-//                double gpa = Double.parseDouble(fields[4].trim());
-//
-//                row.put("gpa", gpa);
-//
-//            }
-//            c++;
-//        }
-//        studentsTable.close();
-//
-//
-//        SQLTerm[] arrSQLTerms;
-//        arrSQLTerms = new SQLTerm[2];
-//        arrSQLTerms[0] = new SQLTerm();
-//        arrSQLTerms[0]._strTableName = "students";
-//        arrSQLTerms[0]._strColumnName= "first_name";
-//        arrSQLTerms[0]._strOperator = "=";
-//        arrSQLTerms[0]._objValue =row.get("first_name");
-//
-//        arrSQLTerms[1] = new SQLTerm();
-//        arrSQLTerms[1]._strTableName = "students";
-//        arrSQLTerms[1]._strColumnName= "gpa";
-//        arrSQLTerms[1]._strOperator = "=";
-//        arrSQLTerms[1]._objValue = row.get("gpa");
-//
-//        String[]strarrOperators = new String[1];
-//        strarrOperators[0] = "AND";
-//// select * from Student where name = “John Noor” or gpa = 1.5;
-//        DBApp dbApp = new DBApp();
-//        dbApp.init();
-//        Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
-//    }
+        arrSQLTerms[1] = new SQLTerm();
+        arrSQLTerms[1]._strTableName = "students";
+        arrSQLTerms[1]._strColumnName= "gpa";
+        arrSQLTerms[1]._strOperator = "=";
+        arrSQLTerms[1]._objValue = new Double(0.7);
+
+        String[]strarrOperators = new String[1];
+        strarrOperators[0] = "AND";
+
+        DBApp dbApp = new DBApp();
+        dbApp.init();
+        Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
+    }
+
+    @Test
+    public void testSelectActualStudentOR() throws Exception{
+        // Should return a non-empty iterator with no errors thrown
+
+        BufferedReader studentsTable = new BufferedReader(new FileReader("src/main/resources/students_table.csv"));
+        String record;
+        int c = 0;
+        int finalLine = 1;
+        Hashtable<String, Object> row = new Hashtable();
+
+
+        while ((record = studentsTable.readLine()) != null && c <= finalLine) {
+            if (c == finalLine) {
+                String[] fields = record.split(",");
+                row.put("id", fields[0]);
+                row.put("first_name", fields[1]);
+                row.put("last_name", fields[2]);
+
+                int year = Integer.parseInt(fields[3].trim().substring(0, 4));
+                int month = Integer.parseInt(fields[3].trim().substring(5, 7));
+                int day = Integer.parseInt(fields[3].trim().substring(8));
+
+
+                Date dob = new Date(year - 1900, month - 1, day);
+                row.put("dob", dob);
+
+                double gpa = Double.parseDouble(fields[4].trim());
+
+                row.put("gpa", gpa);
+
+            }
+            c++;
+        }
+        studentsTable.close();
+
+
+        SQLTerm[] arrSQLTerms;
+        arrSQLTerms = new SQLTerm[2];
+        arrSQLTerms[0] = new SQLTerm();
+        arrSQLTerms[0]._strTableName = "students";
+        arrSQLTerms[0]._strColumnName= "first_name";
+        arrSQLTerms[0]._strOperator = "=";
+        arrSQLTerms[0]._objValue =row.get("first_name");
+
+        arrSQLTerms[1] = new SQLTerm();
+        arrSQLTerms[1]._strTableName = "students";
+        arrSQLTerms[1]._strColumnName= "gpa";
+        arrSQLTerms[1]._strOperator = "<=";
+        arrSQLTerms[1]._objValue = row.get("gpa");
+
+        String[]strarrOperators = new String[1];
+        strarrOperators[0] = "OR";
+
+        DBApp dbApp = new DBApp();
+        dbApp.init();
+        Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
+    }
+
+    @Test
+    public void testSelectActualStudentAND() throws Exception{
+        // Should return a non-empty iterator with no errors thrown
+
+        BufferedReader studentsTable = new BufferedReader(new FileReader("src/main/resources/students_table.csv"));
+        String record;
+        int c = 0;
+        int finalLine = 1;
+        Hashtable<String, Object> row = new Hashtable();
+
+
+        while ((record = studentsTable.readLine()) != null && c <= finalLine) {
+            if (c == finalLine) {
+                String[] fields = record.split(",");
+                row.put("id", fields[0]);
+                row.put("first_name", fields[1]);
+                row.put("last_name", fields[2]);
+
+                int year = Integer.parseInt(fields[3].trim().substring(0, 4));
+                int month = Integer.parseInt(fields[3].trim().substring(5, 7));
+                int day = Integer.parseInt(fields[3].trim().substring(8));
+
+
+                Date dob = new Date(year - 1900, month - 1, day);
+                row.put("dob", dob);
+
+                double gpa = Double.parseDouble(fields[4].trim());
+
+                row.put("gpa", gpa);
+
+            }
+            c++;
+        }
+        studentsTable.close();
+
+
+        SQLTerm[] arrSQLTerms;
+        arrSQLTerms = new SQLTerm[2];
+        arrSQLTerms[0] = new SQLTerm();
+        arrSQLTerms[0]._strTableName = "students";
+        arrSQLTerms[0]._strColumnName= "first_name";
+        arrSQLTerms[0]._strOperator = "=";
+        arrSQLTerms[0]._objValue =row.get("first_name");
+
+        arrSQLTerms[1] = new SQLTerm();
+        arrSQLTerms[1]._strTableName = "students";
+        arrSQLTerms[1]._strColumnName= "gpa";
+        arrSQLTerms[1]._strOperator = "=";
+        arrSQLTerms[1]._objValue = row.get("gpa");
+
+        String[]strarrOperators = new String[1];
+        strarrOperators[0] = "AND";
+// select * from Student where name = “John Noor” or gpa = 1.5;
+        DBApp dbApp = new DBApp();
+        dbApp.init();
+        Iterator resultSet = dbApp.selectFromTable(arrSQLTerms , strarrOperators);
+    }
 
 
     private void createStudentTable(DBApp dbApp) throws Exception {
