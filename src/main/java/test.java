@@ -395,13 +395,13 @@ public class test {
 		//System.out.println(amory.readBucketIntoVector("BAmory{0}[0](0).class"));
 //		createTableTest(amory);
 //		insertDataTest(amory);
-		createIndexTest(amory);
-//		updateTest(amory);
+//		selectTest(amory);
+		universitySelectTest(amory);
 //		insertTest(amory);
-		//deleteTest(amory);
-//	selectTest(amory);
 //		System.out.println(amory.readBucketIntoVector("BAmory{0}[0](0).class"));
-		
+		//deleteTest(amory);
+//		updateTest(amory);
+//		createIndexTest(amory);
 //		Hashtable<String, Object> a = new Hashtable<>();
 //		a.put("asas", null);
 	}
@@ -435,8 +435,8 @@ public class test {
 		
 		htblColNameValue.clear( );
 		htblColNameValue.put("id", new Integer( 453455 ));
-		htblColNameValue.put("name", new String("Ahmed Noor" ) );
-		htblColNameValue.put("gpa", new Double( 0.95 ) );
+		htblColNameValue.put("name", new String("Sawy Noor" ) );
+		htblColNameValue.put("gpa", new Double( 1.2 ) );
 		
 		app.insertIntoTable( "Amory" , htblColNameValue );
 		
@@ -455,16 +455,37 @@ public class test {
 		app.insertIntoTable( "Amory" , htblColNameValue );
 		
 		htblColNameValue.clear( );
-		htblColNameValue.put("id", new Integer( 78452 ));
+		htblColNameValue.put("id", new Integer( 78412 ));
 		htblColNameValue.put("name", new String("Zaky Noor" ) );
 		htblColNameValue.put("gpa", new Double( 0.88 ) );
+		
+		app.insertIntoTable( "Amory" , htblColNameValue );
+		
+		htblColNameValue.clear( );
+		htblColNameValue.put("id", new Integer( 1111 ));
+		htblColNameValue.put("name", new String("Sherif Noor" ) );
+		htblColNameValue.put("gpa", new Double( 0.99 ) );
+		
+		app.insertIntoTable( "Amory" , htblColNameValue );
+		
+		htblColNameValue.clear( );
+		htblColNameValue.put("id", new Integer( 2222 ));
+		htblColNameValue.put("name", new String("Belo Noor" ) );
+		htblColNameValue.put("gpa", new Double( 0.7 ) );
+		
+		app.insertIntoTable( "Amory" , htblColNameValue );
+		
+		htblColNameValue.clear( );
+		htblColNameValue.put("id", new Integer( 3333 ));
+		htblColNameValue.put("name", new String("WAWA Noor" ) );
+		htblColNameValue.put("gpa", new Double( 3.2 ) );
 		
 		app.insertIntoTable( "Amory" , htblColNameValue );
 	}
 	
 	public static void createIndexTest(DBApp app) throws DBAppException {
 
-		String[] arr={"gpa"};
+		String[] arr={"id"};
 		app.createIndex("Amory", arr);
 	}
 	
@@ -477,13 +498,13 @@ public class test {
 		
 		term1._strTableName = "Amory";
 		term1._strColumnName= "id";
-		term1._strOperator = ">=";
-		term1._objValue = new Integer( 1 );
+		term1._strOperator = "<=";
+		term1._objValue = new Integer( 1111 );
 		
-//		term2._strTableName = "Amory";
-//		term2._strColumnName= "name";
-//		term2._strOperator = "<=";
-//		term2._objValue = "John Noor";
+		term2._strTableName = "Amory";
+		term2._strColumnName= "id";
+		term2._strOperator = ">=";
+		term2._objValue = new Integer( 3333 );
 		
 //		term2._strTableName = "Amory";
 //		term2._strColumnName= "gpa";
@@ -495,9 +516,9 @@ public class test {
 //		term3._strOperator = "=";
 //		term3._objValue = new Integer( 78452 );
 		
-		SQLTerm[] arrSQLTerms= {term1};
+		SQLTerm[] arrSQLTerms= {term1,term2};
 		
-		String[]strarrOperators = {};
+		String[]strarrOperators = {"AND"};
 		
 		Iterator resultSet = app.selectFromTable(arrSQLTerms , strarrOperators);
 		if(resultSet==null) {
@@ -513,6 +534,60 @@ public class test {
 		}
 	
 	}
+	
+	public static void universitySelectTest(DBApp app) throws DBAppException{
+		SQLTerm term1 = new SQLTerm();
+		SQLTerm term2 = new SQLTerm();
+		SQLTerm term3 = new SQLTerm();
+		SQLTerm term4 = new SQLTerm();
+		SQLTerm term5 = new SQLTerm();
+		
+		term1._strTableName = "students";
+		term1._strColumnName= "id";
+		term1._strOperator = ">=";
+		term1._objValue = new String("46-0000");
+		
+		term2._strTableName = "students";
+		term2._strColumnName= "id";
+		term2._strOperator = "<=";
+		term2._objValue = new String( "46-9999" );
+		
+		term4._strTableName = "students";
+		term4._strColumnName= "id";
+		term4._strOperator = "<=";
+		term4._objValue = new String( "49-9999" );
+		
+		
+//		term2._strTableName = "Amory";
+//		term2._strColumnName= "gpa";
+//		term2._strOperator = "=";
+//		term2._objValue = new Double( 0.95 );
+		
+		term3._strTableName = "students";
+		term3._strColumnName= "gpa";
+		term3._strOperator = ">";
+		term3._objValue = new Double(1.0);
+		
+		SQLTerm[] arrSQLTerms= {term1,term2,term4,term3};
+		
+		String[]strarrOperators = {"AND","OR","XOR"};
+		
+		Iterator resultSet = app.selectFromTable(arrSQLTerms , strarrOperators);
+		if(resultSet==null) {
+			System.out.println("null");
+		}else {
+			if(resultSet.hasNext()) {
+				while(resultSet.hasNext()) {
+					System.out.println(resultSet.next());
+				}
+			}else {
+				System.out.println("This is an empty result set");
+			}
+		}
+	
+	}
+	
+	
 	
 	public static void updateTest(DBApp app) throws DBAppException{
 		Hashtable<String,Object> htblColNameValue = new Hashtable<>();

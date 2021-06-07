@@ -1520,9 +1520,6 @@ public class DBApp implements DBAppInterface {
 	}
 
 	public Iterator selectFromTable(SQLTerm[] arrSQLTerms, String[] strarrOperators) throws DBAppException {
-//		if(arrSQLTerms.length==0&&strarrOperators.length==0) {
-//			return null;
-//		}
 
 		// check select constraints
 		checkSelectConstraints(arrSQLTerms, strarrOperators);
@@ -1539,6 +1536,7 @@ public class DBApp implements DBAppInterface {
 		for (int i = 0; i < strarrOperators.length; i++) {
 			operatorsList.add(strarrOperators[i]);
 		}
+		
 		String tableName1 = SQLTermList.get(0)._strTableName;
 		ArrayList<ArrayList<SQLTerm>> ANDedPairs = new ArrayList<>();
 		Stack<SQLTerm> stack = new Stack<>();
@@ -1600,7 +1598,7 @@ public class DBApp implements DBAppInterface {
 			return finalResultList.iterator();
 			// return the results...
 		} else {
-			// Check if all queries has primary key
+			// Check if all queries have primary key
 			// if true then go to sawy's code
 			boolean flag = true;
 			for (int i = 0; i < ANDedPairs.size(); i++) {
@@ -1625,11 +1623,51 @@ public class DBApp implements DBAppInterface {
 				if (!flag) {
 					break;
 				}
-
 			}
 			if (flag) {
 				// primary key select
-				return null;
+				//new Sawy's code
+				ArrayList<String> collection = new ArrayList<>();
+				collection.add("AND");
+				operatorsList.removeAll(collection);
+				ArrayList<HashSet<Hashtable<String, Object>>> ANDedResult = getANDedPairsResultsSawy(ANDedPairs);
+				ArrayList<ArrayList<HashSet<Hashtable<String, Object>>>> ORedPairs = new ArrayList<>();
+				for (int i = 0; i < ANDedResult.size(); i++) {
+					stack2.push(ANDedResult.get(i));
+					if (i == ANDedResult.size() - 1 || operatorsList.size() == 0 || !operatorsList.get(i).equals("OR")) {
+						ArrayList<HashSet<Hashtable<String, Object>>> list = new ArrayList<>();
+						while (!stack2.isEmpty()) {
+							list.add(stack2.pop());
+						}
+						ORedPairs.add(list);
+					}
+				}
+				ArrayList<HashSet<Hashtable<String, Object>>> XORedPairs = new ArrayList<>();
+				for (int i = 0; i < ORedPairs.size(); i++) {
+					HashSet<Hashtable<String, Object>> pairResult = new HashSet<>();
+					for (int j = 0; j < ORedPairs.get(i).size(); j++) {
+						pairResult.addAll(ORedPairs.get(i).get(j));
+					}
+					XORedPairs.add(pairResult);
+				}
+				while (XORedPairs.size() > 1) {
+					HashSet<Hashtable<String, Object>> Union = new HashSet<>();
+					HashSet<Hashtable<String, Object>> Intersection = new HashSet<>();
+					Union.addAll(XORedPairs.get(0));
+					Union.addAll(XORedPairs.get(1));
+					Intersection.addAll(XORedPairs.get(0));
+					Intersection.retainAll(XORedPairs.get(1));
+					Union.removeAll(Intersection);
+					XORedPairs.add(0, Union);
+					XORedPairs.remove(1);
+					XORedPairs.remove(1);
+				}
+				HashSet<Hashtable<String, Object>> finalResultSet = XORedPairs.get(0);
+				ArrayList<Hashtable<String, Object>> finalResultList = new ArrayList<>();
+				finalResultList.addAll(finalResultSet);
+				// sort by primary key if needed
+				return finalResultList.iterator();
+				// return the results...
 			}
 			// else go to
 			// Linear Code
@@ -1640,18 +1678,20 @@ public class DBApp implements DBAppInterface {
 					BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
 					String current = br.readLine();
 					while (current != null) {
-						String arr[] = current.split(",");
-						String tableName = arr[0];
-						String columnName = arr[1];
-						String datatype = arr[2];
-						for (int i = 0; i < arrSQLTerms.length; i++) {
-							if (tableName.equals(arrSQLTerms[i]._strTableName)
-									&& columnName.equals(arrSQLTerms[i]._strColumnName) && arr[3].equals("true")) {
-
-								datatypes[i] = datatype;
-							} else if (tableName.equals(arrSQLTerms[i]._strTableName)
-									&& columnName.equals(arrSQLTerms[i]._strColumnName)) {
-								datatypes[i] = datatype;
+						if(current.length()!=0) {
+							String arr[] = current.split(",");
+							String tableName = arr[0];
+							String columnName = arr[1];
+							String datatype = arr[2];
+							for (int i = 0; i < arrSQLTerms.length; i++) {
+								if (tableName.equals(arrSQLTerms[i]._strTableName)
+										&& columnName.equals(arrSQLTerms[i]._strColumnName) && arr[3].equals("true")) {
+	
+									datatypes[i] = datatype;
+								} else if (tableName.equals(arrSQLTerms[i]._strTableName)
+										&& columnName.equals(arrSQLTerms[i]._strColumnName)) {
+									datatypes[i] = datatype;
+								}
 							}
 						}
 						current = br.readLine();
@@ -1727,7 +1767,6 @@ public class DBApp implements DBAppInterface {
 						}
 					}
 				}
-				System.out.println(count);
 				return selectResultSet.iterator();
 			}
 		}
@@ -1741,13 +1780,21 @@ public class DBApp implements DBAppInterface {
 			ArrayList<Grid> Grids) {
 		for (int i = 0; i < Terms.size(); i++) {
 			HashSet<String> hashSetColumnName = new HashSet<>();
-
+			boolean foundNotEqualPrimaryKey=false;
+			
 			for (int j = 0; j < Terms.get(i).size(); j++) {
 				hashSetColumnName.add(Terms.get(i).get(j)._strColumnName);
+				
+				if(Terms.get(i).get(j)._strColumnName.equals(getPrimaryKeyName(Terms.get(i).get(j)._strTableName))&&Terms.get(i).get(j)._strOperator.equals("!=")) {
+					return false;
+				}
+				
 			}
 			Grid g;
 			if ((g = selectSuitableGridForSelect(Terms.get(i).get(0)._strTableName, hashSetColumnName)) == null
-					& !checkPrimaryKeyExists(Terms.get(i).get(0)._strTableName, hashSetColumnName)) {
+					& !checkPrimaryKeyExists(Terms.get(i).get(0)._strTableName,
+							hashSetColumnName)) {
+				
 				return false;
 			}
 			if (g != null) {
@@ -2205,6 +2252,36 @@ public class DBApp implements DBAppInterface {
 				Terms.get(0).get(0)._strTableName);
 		finalResult.addAll(sawyresult);
 		return finalResult;
+	}
+	
+	public ArrayList<HashSet<Hashtable<String, Object>>> getANDedPairsResultsSawy(ArrayList<ArrayList<SQLTerm>> Terms) {
+		ArrayList<HashSet<Hashtable<String, Object>>> sawyresult = new ArrayList<>();
+		for (int i = 0; i < Terms.size(); i++) {
+			// organizing each column with the constraints on it to decide what to do in
+			// each level
+			Hashtable<String, ArrayList<SQLTerm>> ht = new Hashtable<>();
+			for (int j = 0; j < Terms.get(i).size(); j++) {
+				if (ht.containsKey(Terms.get(i).get(j)._strColumnName)) {
+					ht.get(Terms.get(i).get(j)._strColumnName).add(Terms.get(i).get(j));
+				} else {
+					ht.put(Terms.get(i).get(j)._strColumnName, new ArrayList<SQLTerm>());
+					ht.get(Terms.get(i).get(j)._strColumnName).add(Terms.get(i).get(j));
+				}
+			}
+				// result.add(Sawy's code)
+				ArrayList<SQLTerm> list = new ArrayList<>();
+				for (String column : ht.keySet()) {
+					list.addAll(ht.get(column));
+				}
+				ArrayList<String> dataTypes = new ArrayList<>();
+				for (SQLTerm term : list) {
+					dataTypes.add(getColumnDataType(term._strTableName, term._strColumnName));
+				}
+				sawyresult.add(
+						binarySearchPrimaryKeyAndNoIndex(list, getPrimaryKeyName(Terms.get(i).get(0)._strTableName),
+								getPrimaryKeyDataType(Terms.get(i).get(0)._strTableName), dataTypes));
+		}
+		return sawyresult;
 	}
 
 	public static ArrayList<HashSet<Hashtable<String, Object>>> loadBucketItemsintoRows(
@@ -3393,6 +3470,11 @@ public class DBApp implements DBAppInterface {
 		int countMatches = 0;
 		int bestcountMatches = 0;
 		int bestsize = 0;
+		
+		if(tableGrids==null) {
+			return null;
+		}
+		
 		for (Grid grid : tableGrids) {
 			for (String colName : grid.namesAndLevels.keySet()) {
 				if (hashSetColumnName.contains(colName)) {
@@ -3473,7 +3555,6 @@ public class DBApp implements DBAppInterface {
 		int overFlowNumber = getFileOverflowNumber(pageName);
 		int recordIndex = binarySearchInPagesForSelect(primaryColumn, termForBinarySearch._strTableName, pageNumber,
 				overFlowNumber, termForBinarySearch._objValue, primaryDataType);
-		System.out.println(termForBinarySearch._strOperator);
 		// variables for the second term, if it exists and is meaningful (both terms
 		// together form a range)
 		String secondaryPageName = null;
@@ -3482,10 +3563,9 @@ public class DBApp implements DBAppInterface {
 		int secondaryRecordIndex = -1;
 		if (secondRangeBoundaryExists) {
 			if (((secondBoundaryTerm._strOperator.equals("<") || secondBoundaryTerm._strOperator.equals("<="))
-					&& (termForBinarySearch._strOperator.equals(">")) || termForBinarySearch._strOperator.equals(">="))
+					&& (termForBinarySearch._strOperator.equals(">") || termForBinarySearch._strOperator.equals(">=")))
 					|| ((secondBoundaryTerm._strOperator.equals(">") || secondBoundaryTerm._strOperator.equals(">="))
-							&& (termForBinarySearch._strOperator.equals("<"))
-							|| termForBinarySearch._strOperator.equals("<="))) {
+							&& (termForBinarySearch._strOperator.equals("<") || termForBinarySearch._strOperator.equals("<=")))) {
 
 				secondaryPageName = binarySearchOnPagesForSelect(secondBoundaryTerm._strTableName, numOfPages,
 						secondBoundaryTerm._strColumnName, secondBoundaryTerm._objValue, primaryDataType);
@@ -3495,7 +3575,6 @@ public class DBApp implements DBAppInterface {
 
 				secondaryRecordIndex = binarySearchInPagesForSelect(primaryColumn, secondBoundaryTerm._strTableName,
 						secondaryPageNumber, secondaryOverFlowNumber, secondBoundaryTerm._objValue, primaryDataType);
-				System.out.println(secondBoundaryTerm._strOperator);
 			}
 		}
 		// if the term operator is an =
@@ -3534,7 +3613,6 @@ public class DBApp implements DBAppInterface {
 					&& (secondBoundaryTerm._strOperator.equals("<") || secondBoundaryTerm._strOperator.equals("<="))
 					&& ((termForBinarySearch._strOperator.equals(">"))
 							|| termForBinarySearch._strOperator.equals(">="))) {
-				System.out.println("first");
 				for (int i = pageNumber; i <= secondaryPageNumber; i++) {
 					int noOfOverflows = countNumberOfPageOverflows(termForBinarySearch._strTableName, i);
 					int overflowToStopAt = i == secondaryPageNumber ? secondaryOverFlowNumber : noOfOverflows;
@@ -3577,7 +3655,6 @@ public class DBApp implements DBAppInterface {
 					&& (secondBoundaryTerm._strOperator.equals(">") || secondBoundaryTerm._strOperator.equals(">="))
 					&& ((termForBinarySearch._strOperator.equals("<"))
 							|| termForBinarySearch._strOperator.equals("<="))) {
-				System.out.println("second");
 				for (int i = secondaryPageNumber; i <= pageNumber; i++) {
 					int noOfOverflows = countNumberOfPageOverflows(termForBinarySearch._strTableName, i);
 					int overflowToStopAt = i == pageNumber ? overFlowNumber : noOfOverflows;
@@ -3617,7 +3694,6 @@ public class DBApp implements DBAppInterface {
 				}
 				// no range is formed, so we check from beginning to upperbound
 			} else if (termForBinarySearch._strOperator.equals("<") || termForBinarySearch._strOperator.equals("<=")) {
-				System.out.println("third");
 				for (int i = 1; i <= pageNumber; i++) {
 					int noOfOverflows = countNumberOfPageOverflows(termForBinarySearch._strTableName, i);
 					int overflowToStopAt = i == pageNumber ? overFlowNumber : noOfOverflows;
@@ -3653,7 +3729,6 @@ public class DBApp implements DBAppInterface {
 				}
 				// searching from lower bound to end
 			} else if (termForBinarySearch._strOperator.equals(">") || termForBinarySearch._strOperator.equals(">=")) {
-				System.out.println("fourth");
 				for (int i = pageNumber; i <= numOfPages; i++) {
 					int noOfOverflows = countNumberOfPageOverflows(termForBinarySearch._strTableName, i);
 					int overflowToBeginAt = i == pageNumber ? overFlowNumber : 0;
