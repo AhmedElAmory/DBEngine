@@ -13,6 +13,7 @@ public class test {
 	Hashtable<String,ArrayList<Grid>> allIndexes;
 
 	public test(){
+
 		allIndexes =  new Hashtable<String,ArrayList<Grid>>();
 		//Read indices into memory
 		String path = "src\\main\\resources\\indices.class";
@@ -40,15 +41,15 @@ public class test {
 		return res;
 	}
 	public static void main(String[] args) throws DBAppException {
-		DBApp db= new DBApp();
+//		DBApp db= new DBApp();
 		//Vector<Hashtable<String, Object>> x =db.readPageIntoVector("students[1](0).class");
-	Vector<BucketItem> x =db.readBucketIntoVector("Bstudents{7}[1](0).class");
-		System.out.println(x.toString());
-		Vector<BucketItem> z =db.readBucketIntoVector("Bstudents{7}[2](0).class");
-		System.out.println(z.toString());
+//	Vector<BucketItem> x =db.readBucketIntoVector("Bstudents{7}[1](0).class");
+//		System.out.println(x.toString());
+//		Vector<BucketItem> z =db.readBucketIntoVector("Bstudents{7}[2](0).class");
+//		System.out.println(z.toString());
 //		testing();
 //		hashtableTest();
-		//Testing();
+		Testing();
 //		testInsertion();
 
 //		Hashtable<String,Object> a = new Hashtable<String,Object>();
@@ -411,8 +412,8 @@ public class test {
 		//System.out.println(amory.readBucketIntoVector("BAmory{0}[0](0).class"));
 //		createTableTest(amory);
 //		insertDataTest(amory);
-//		selectTest(amory);
-		universitySelectTest(amory);
+		selectTest(amory);
+//		universitySelectTest(amory);
 //		insertTest(amory);
 //		System.out.println(amory.readBucketIntoVector("BAmory{0}[0](0).class"));
 		//deleteTest(amory);
@@ -501,7 +502,7 @@ public class test {
 	
 	public static void createIndexTest(DBApp app) throws DBAppException {
 
-		String[] arr={"id"};
+		String[] arr={"id","name","gpa"};
 		app.createIndex("Amory", arr);
 	}
 	
@@ -513,14 +514,14 @@ public class test {
 		SQLTerm term5 = new SQLTerm();
 		
 		term1._strTableName = "Amory";
-		term1._strColumnName= "id";
-		term1._strOperator = "<=";
-		term1._objValue = new Integer( 1111 );
+		term1._strColumnName= "gpa";
+		term1._strOperator = ">=";
+		term1._objValue = new Double(  1);
 		
 		term2._strTableName = "Amory";
-		term2._strColumnName= "id";
-		term2._strOperator = ">=";
-		term2._objValue = new Integer( 3333 );
+		term2._strColumnName= "name";
+		term2._strOperator = ">";
+		term2._objValue = new String( "Zaky Noor" );
 		
 //		term2._strTableName = "Amory";
 //		term2._strColumnName= "gpa";
@@ -532,9 +533,9 @@ public class test {
 //		term3._strOperator = "=";
 //		term3._objValue = new Integer( 78452 );
 		
-		SQLTerm[] arrSQLTerms= {term1,term2};
+		SQLTerm[] arrSQLTerms = { /* term1 , */term2};
 		
-		String[]strarrOperators = {"AND"};
+		String[] strarrOperators = { /* "AND" */};
 		
 		Iterator resultSet = app.selectFromTable(arrSQLTerms , strarrOperators);
 		if(resultSet==null) {

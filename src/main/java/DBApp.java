@@ -368,7 +368,8 @@ public class DBApp implements DBAppInterface {
 
 	public BucketItem deleteRowFromIndexes(String strTableName, Hashtable<String, Object> removed, String Primarykey,
 			String PrimarykeyType) {
-
+		Primarykey=getPrimaryKeyName(strTableName);
+		PrimarykeyType=getPrimaryKeyDataType(strTableName);
 		if (!allIndexes.containsKey(strTableName)) {
 			return null;
 		}
@@ -383,6 +384,7 @@ public class DBApp implements DBAppInterface {
 					valuesToUseInIndex.put(colNam, removed.get(colNam));
 			}
 			Hashtable<Integer, Integer> indexPostion = grid.getPositionInGrid(valuesToUseInIndex);
+			System.out.println(indexPostion.toString());
 			// System.out.println(indexPostion.toString());
 			int noOfLevels = indexColumnsSet.size();
 			Object[] currentarray = grid.array;
@@ -405,6 +407,9 @@ public class DBApp implements DBAppInterface {
 					Vector<BucketItem> bucketVector = grid.readBucketIntoVector(bucketName);
 					for (int q = 0; q < bucketVector.size(); q++) {
 						BucketItem item = bucketVector.get(q);
+//						System.out.println(Primarykey);
+//						System.out.println(item.primaryKeyValue+" "+removed.get(Primarykey));
+//						System.out.println(compare(item.primaryKeyValue, removed.get(Primarykey), PrimarykeyType)==0);
 						if ((compare(item.primaryKeyValue, removed.get(Primarykey), PrimarykeyType)) == 0) {
 							deleted = bucketVector.remove(q);
 
@@ -440,7 +445,7 @@ public class DBApp implements DBAppInterface {
 		}
 		return deleted;
 	}
-
+	
 	public Grid selectSuitableGrid(String tableName, Hashtable<String, Object> htblColNameValue,
 
 			boolean primaryKeyExists, String primaryKeyColName) {
@@ -647,8 +652,8 @@ public class DBApp implements DBAppInterface {
 								valuesTodelete.put(Bitem.pageName, primarykeyarray);
 							}
 						}
-						System.out.println("******    " + bucketName + "  " + bucket.size());
-						System.out.println(valuesTodelete.toString());
+//						System.out.println("******    " + bucketName + "  " + bucket.size());
+//						System.out.println(valuesTodelete.toString());
 						// System.out.println("jjjj");
 						for (String pageName : valuesTodelete.keySet()) {
 							Vector<Hashtable<String, Object>> pageVector = readPageIntoVector(pageName);
@@ -667,7 +672,7 @@ public class DBApp implements DBAppInterface {
 										// System.out.println("kk");
 										boolean checkDelete = true;
 										Set<String> columns = deleteConditions.keySet();
-										System.out.println(pageVector.get(mid).toString());
+//										System.out.println(pageVector.get(mid).toString());
 										for (String column : columns) {
 											if (!(pageVector.get(mid).get(column)
 													.equals(deleteConditions.get(column)))) {
@@ -1974,21 +1979,28 @@ public class DBApp implements DBAppInterface {
 			if (levelConstraints.get(i)._strOperator.equals(">") | levelConstraints.get(i)._strOperator.equals(">=")
 					| levelConstraints.get(i)._strOperator.equals("<")
 					| levelConstraints.get(i)._strOperator.equals("<=")) {
+				
 				if (levelConstraints.get(i)._strOperator.equals(">")
 						| levelConstraints.get(i)._strOperator.equals(">=")) {
-
+					
 					if (compare(getMaximumOfColumn(levelConstraints.get(i)._strTableName, currentLevelColumnName),
-							levelConstraints.get(i)._objValue, thisLevelDataType) < 0) {
-						levelConstraints.get(i)._objValue = getMaximumOfColumn(levelConstraints.get(i)._strTableName,
-								currentLevelColumnName);
-						levelConstraints.get(i)._strOperator = ">";
+							levelConstraints.get(i)._objValue, thisLevelDataType) <= 0) {
+						
+//						levelConstraints.get(i)._objValue = getMaximumOfColumn(levelConstraints.get(i)._strTableName,
+//								currentLevelColumnName);
+//						levelConstraints.get(i)._strOperator = ">";
+						//if greater than or equal to the column maximum then no rows will be found so return empty result set
+						return new HashSet<BucketItem>();
 					}
 				} else {
+					
 					if (compare(getMinimumOfColumn(levelConstraints.get(i)._strTableName, currentLevelColumnName),
 							levelConstraints.get(i)._objValue, thisLevelDataType) > 0) {
-						levelConstraints.get(i)._objValue = getMinimumOfColumn(levelConstraints.get(i)._strTableName,
-								currentLevelColumnName);
-						levelConstraints.get(i)._strOperator = "<";
+//						levelConstraints.get(i)._objValue = getMinimumOfColumn(levelConstraints.get(i)._strTableName,
+//								currentLevelColumnName);
+//						levelConstraints.get(i)._strOperator = "<";
+//						if less than the column minimum then no rows will be found so return empty result set
+						return new HashSet<BucketItem>();
 					}
 				}
 
