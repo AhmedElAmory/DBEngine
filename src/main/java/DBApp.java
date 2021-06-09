@@ -366,10 +366,6 @@ public class DBApp implements DBAppInterface {
 
 	}
 
-	// following method could be used to delete one or more rows.
-	// htblColNameValue holds the key and value. This will be used in search
-	// to identify which rows/tuples to delete.
-	// htblColNameValue entries are ANDED together
 	public BucketItem deleteRowFromIndexes(String strTableName, Hashtable<String, Object> removed, String Primarykey,
 			String PrimarykeyType) {
 
@@ -1773,10 +1769,6 @@ public class DBApp implements DBAppInterface {
 		}
 	}
 
-	// Supplement methods
-	// This method check if the inserted table already exists.
-
-	// if grid==null do sawy's code
 	public boolean checkAllPairsHaveGridsAndNoNotEqualOrHavePrimaryKey(ArrayList<ArrayList<SQLTerm>> Terms,
 			ArrayList<Grid> Grids) {
 		for (int i = 0; i < Terms.size(); i++) {
@@ -2980,7 +2972,6 @@ public class DBApp implements DBAppInterface {
 		return v;
 	}
 
-////Delete Methods
 	public void linearDeleteOnTable(String strTableName, Hashtable<String, Object> htblColNameValue) {
 		String Primarykey = "";
 		String PrimarykeyType = "";
@@ -3206,11 +3197,6 @@ public class DBApp implements DBAppInterface {
 		}
 		return "";
 	}
-
-	// following method could be used to delete one or more rows.
-	// htblColNameValue holds the key and value. This will be used in search
-	// to identify which rows/tuples to delete.
-	// htblColNameValue entries are ANDED together
 
 	public String checkDeleteConstraints(String strTableName, Hashtable<String, Object> htblColNameValue)
 			throws DBAppException {
@@ -3583,7 +3569,6 @@ public class DBApp implements DBAppInterface {
 		}
 	}
 
-	// Sawy stuff
 	public HashSet<Hashtable<String, Object>> binarySearchPrimaryKeyAndNoIndex(ArrayList<SQLTerm> andedTerms,
 			String primaryColumn, String primaryDataType, ArrayList<String> datatypes) {
 		HashSet<Hashtable<String, Object>> results = new HashSet<Hashtable<String, Object>>();
