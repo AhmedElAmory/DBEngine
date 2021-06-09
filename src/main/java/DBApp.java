@@ -1536,7 +1536,7 @@ public class DBApp implements DBAppInterface {
 		for (int i = 0; i < strarrOperators.length; i++) {
 			operatorsList.add(strarrOperators[i]);
 		}
-		
+
 		String tableName1 = SQLTermList.get(0)._strTableName;
 		ArrayList<ArrayList<SQLTerm>> ANDedPairs = new ArrayList<>();
 		Stack<SQLTerm> stack = new Stack<>();
@@ -1626,7 +1626,7 @@ public class DBApp implements DBAppInterface {
 			}
 			if (flag) {
 				// primary key select
-				//new Sawy's code
+				// new Sawy's code
 				ArrayList<String> collection = new ArrayList<>();
 				collection.add("AND");
 				operatorsList.removeAll(collection);
@@ -1634,7 +1634,8 @@ public class DBApp implements DBAppInterface {
 				ArrayList<ArrayList<HashSet<Hashtable<String, Object>>>> ORedPairs = new ArrayList<>();
 				for (int i = 0; i < ANDedResult.size(); i++) {
 					stack2.push(ANDedResult.get(i));
-					if (i == ANDedResult.size() - 1 || operatorsList.size() == 0 || !operatorsList.get(i).equals("OR")) {
+					if (i == ANDedResult.size() - 1 || operatorsList.size() == 0
+							|| !operatorsList.get(i).equals("OR")) {
 						ArrayList<HashSet<Hashtable<String, Object>>> list = new ArrayList<>();
 						while (!stack2.isEmpty()) {
 							list.add(stack2.pop());
@@ -1678,7 +1679,7 @@ public class DBApp implements DBAppInterface {
 					BufferedReader br = new BufferedReader(new FileReader("src\\main\\resources\\metadata.csv"));
 					String current = br.readLine();
 					while (current != null) {
-						if(current.length()!=0) {
+						if (current.length() != 0) {
 							String arr[] = current.split(",");
 							String tableName = arr[0];
 							String columnName = arr[1];
@@ -1686,7 +1687,7 @@ public class DBApp implements DBAppInterface {
 							for (int i = 0; i < arrSQLTerms.length; i++) {
 								if (tableName.equals(arrSQLTerms[i]._strTableName)
 										&& columnName.equals(arrSQLTerms[i]._strColumnName) && arr[3].equals("true")) {
-	
+
 									datatypes[i] = datatype;
 								} else if (tableName.equals(arrSQLTerms[i]._strTableName)
 										&& columnName.equals(arrSQLTerms[i]._strColumnName)) {
@@ -1780,21 +1781,21 @@ public class DBApp implements DBAppInterface {
 			ArrayList<Grid> Grids) {
 		for (int i = 0; i < Terms.size(); i++) {
 			HashSet<String> hashSetColumnName = new HashSet<>();
-			boolean foundNotEqualPrimaryKey=false;
-			
+			boolean foundNotEqualPrimaryKey = false;
+
 			for (int j = 0; j < Terms.get(i).size(); j++) {
 				hashSetColumnName.add(Terms.get(i).get(j)._strColumnName);
-				
-				if(Terms.get(i).get(j)._strColumnName.equals(getPrimaryKeyName(Terms.get(i).get(j)._strTableName))&&Terms.get(i).get(j)._strOperator.equals("!=")) {
+
+				if (Terms.get(i).get(j)._strColumnName.equals(getPrimaryKeyName(Terms.get(i).get(j)._strTableName))
+						&& Terms.get(i).get(j)._strOperator.equals("!=")) {
 					return false;
 				}
-				
+
 			}
 			Grid g;
 			if ((g = selectSuitableGridForSelect(Terms.get(i).get(0)._strTableName, hashSetColumnName)) == null
-					& !checkPrimaryKeyExists(Terms.get(i).get(0)._strTableName,
-							hashSetColumnName)) {
-				
+					& !checkPrimaryKeyExists(Terms.get(i).get(0)._strTableName, hashSetColumnName)) {
+
 				return false;
 			}
 			if (g != null) {
@@ -2253,7 +2254,7 @@ public class DBApp implements DBAppInterface {
 		finalResult.addAll(sawyresult);
 		return finalResult;
 	}
-	
+
 	public ArrayList<HashSet<Hashtable<String, Object>>> getANDedPairsResultsSawy(ArrayList<ArrayList<SQLTerm>> Terms) {
 		ArrayList<HashSet<Hashtable<String, Object>>> sawyresult = new ArrayList<>();
 		for (int i = 0; i < Terms.size(); i++) {
@@ -2268,18 +2269,17 @@ public class DBApp implements DBAppInterface {
 					ht.get(Terms.get(i).get(j)._strColumnName).add(Terms.get(i).get(j));
 				}
 			}
-				// result.add(Sawy's code)
-				ArrayList<SQLTerm> list = new ArrayList<>();
-				for (String column : ht.keySet()) {
-					list.addAll(ht.get(column));
-				}
-				ArrayList<String> dataTypes = new ArrayList<>();
-				for (SQLTerm term : list) {
-					dataTypes.add(getColumnDataType(term._strTableName, term._strColumnName));
-				}
-				sawyresult.add(
-						binarySearchPrimaryKeyAndNoIndex(list, getPrimaryKeyName(Terms.get(i).get(0)._strTableName),
-								getPrimaryKeyDataType(Terms.get(i).get(0)._strTableName), dataTypes));
+			// result.add(Sawy's code)
+			ArrayList<SQLTerm> list = new ArrayList<>();
+			for (String column : ht.keySet()) {
+				list.addAll(ht.get(column));
+			}
+			ArrayList<String> dataTypes = new ArrayList<>();
+			for (SQLTerm term : list) {
+				dataTypes.add(getColumnDataType(term._strTableName, term._strColumnName));
+			}
+			sawyresult.add(binarySearchPrimaryKeyAndNoIndex(list, getPrimaryKeyName(Terms.get(i).get(0)._strTableName),
+					getPrimaryKeyDataType(Terms.get(i).get(0)._strTableName), dataTypes));
 		}
 		return sawyresult;
 	}
@@ -2820,6 +2820,49 @@ public class DBApp implements DBAppInterface {
 		return "";
 	}
 
+	public static int changeStringToInt(String input) {
+		int base = 10000000;
+		int res = 0;
+		int count = 0;
+		while (base >= 1 && count < input.length()) {
+			res = res + input.charAt(count) * base;
+			base = base / 100;
+			count++;
+		}
+		return res;
+	}
+
+	public static int comapreForRanges1(Object obj1, Object obj2) {
+		int num1 = changeStringToInt((String) obj1);
+		int num2 = (int)obj2;
+		if (num1 > num2)
+			return 1;
+		else if (num1 < num2)
+			return -1;
+		else
+			return 0;
+	}
+	public static int comapreForRanges2(Object obj1, Object obj2) {
+		int num2 = changeStringToInt((String) obj2);
+		int num1 = (int)obj1;
+		if (num1 > num2)
+			return 1;
+		else if (num1 < num2)
+			return -1;
+		else
+			return 0;
+	}
+	public static int comapreForRanges3(Object obj1, Object obj2) {
+		int num1 = (int)obj1;
+		int num2 = (int)obj2;
+		if (num1 > num2)
+			return 1;
+		else if (num1 < num2)
+			return -1;
+		else
+			return 0;
+	}
+
 	// comparing objects
 	public static int compare(Object obj1, Object obj2, String primaryKeyType) {
 
@@ -2840,7 +2883,28 @@ public class DBApp implements DBAppInterface {
 		} else if (primaryKeyType.equals("java.util.Date")) {
 			return ((Date) obj1).compareTo((Date) obj2);
 		} else if (primaryKeyType.equals("java.lang.String")) {
-			return ((String) obj1).compareTo((String) obj2);
+			int x =-1;
+			try {
+				x= (int)obj2;
+			}catch(Exception e){
+				
+			}
+			int y =-1;
+			try {
+				y= (int)obj1;
+			}catch(Exception e){
+				
+			}
+			if (x !=-1 && y!=-1) {
+				return comapreForRanges3(obj1, obj2);
+			}
+			else if (x!=-1) {
+				return comapreForRanges1(obj1, obj2);
+			} else if(y!=-1){
+				return comapreForRanges2(obj1, obj2);
+			}else {
+				return ((String) obj1).compareTo((String) obj2);
+			}
 		}
 		return -100;
 	}
@@ -3470,11 +3534,11 @@ public class DBApp implements DBAppInterface {
 		int countMatches = 0;
 		int bestcountMatches = 0;
 		int bestsize = 0;
-		
-		if(tableGrids==null) {
+
+		if (tableGrids == null) {
 			return null;
 		}
-		
+
 		for (Grid grid : tableGrids) {
 			for (String colName : grid.namesAndLevels.keySet()) {
 				if (hashSetColumnName.contains(colName)) {
@@ -3565,7 +3629,8 @@ public class DBApp implements DBAppInterface {
 			if (((secondBoundaryTerm._strOperator.equals("<") || secondBoundaryTerm._strOperator.equals("<="))
 					&& (termForBinarySearch._strOperator.equals(">") || termForBinarySearch._strOperator.equals(">=")))
 					|| ((secondBoundaryTerm._strOperator.equals(">") || secondBoundaryTerm._strOperator.equals(">="))
-							&& (termForBinarySearch._strOperator.equals("<") || termForBinarySearch._strOperator.equals("<=")))) {
+							&& (termForBinarySearch._strOperator.equals("<")
+									|| termForBinarySearch._strOperator.equals("<=")))) {
 
 				secondaryPageName = binarySearchOnPagesForSelect(secondBoundaryTerm._strTableName, numOfPages,
 						secondBoundaryTerm._strColumnName, secondBoundaryTerm._objValue, primaryDataType);

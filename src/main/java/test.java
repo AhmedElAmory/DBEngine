@@ -1,6 +1,7 @@
 import javax.management.ObjectName;
 import java.io.*;
 import java.lang.reflect.Array;
+import java.math.BigInteger;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -27,12 +28,27 @@ public class test {
 			}
 		}
 	}
-
+	public static int  changeStringToInt(String input) {
+		int base= 10000000;
+		int res =0;
+		int count=0;
+		while (base >=1&&count <input.length()) {
+			res=res+input.charAt(count)*base;
+			base=base/10;
+			count++;
+		}
+		return res;
+	}
 	public static void main(String[] args) throws DBAppException {
-
+		DBApp db= new DBApp();
+		//Vector<Hashtable<String, Object>> x =db.readPageIntoVector("students[1](0).class");
+	Vector<BucketItem> x =db.readBucketIntoVector("Bstudents{7}[1](0).class");
+		System.out.println(x.toString());
+		Vector<BucketItem> z =db.readBucketIntoVector("Bstudents{7}[2](0).class");
+		System.out.println(z.toString());
 //		testing();
 //		hashtableTest();
-		Testing();
+		//Testing();
 //		testInsertion();
 
 //		Hashtable<String,Object> a = new Hashtable<String,Object>();

@@ -80,6 +80,17 @@ public class Grid implements Serializable {
 			}
 		}
 	}
+	public  int  changeStringToInt(String input) {
+		int base= 10000000;
+		int res =0;
+		int count=0;
+		while (base >=1&&count <input.length()) {
+			res=res+input.charAt(count)*base;
+			base=base/100;
+			count++;
+		}
+		return res;
+	}
 	
 	public void divideRanges(int level,String datatype,String min, String max) {
 
@@ -144,36 +155,16 @@ public class Grid implements Serializable {
 			}
 
 		}else {
-			String standard="";
-			for(int i=0;i<Math.max(min.length(), max.length());i++) {
-				if(i<min.length()&&min.charAt(i)==max.charAt(i)) {
-					standard+=min.charAt(i);
-				}else if(i<min.length()&&min.charAt(i)!=max.charAt(i)) {
-					int dif=max.charAt(i)-min.charAt(i);
-					int range=dif/10;
-
-					ranges[level][0]=new Range(min,standard+(char)(min.charAt(i)+range));
-					range+=dif/10;
-					for(int j=1;j<9;j++) {
-						ranges[level][j]=new Range(ranges[level][j-1].max,standard+(char)(min.charAt(i)+range));
-						range+=dif/10;
-					}
-					ranges[level][9]=new Range(ranges[level][8].max,max);
-					break;
-				}else if(i==min.length()) {
-					int dif=max.charAt(i);
-					int range=dif/10;
-
-					ranges[level][0]=new Range(min,standard+(char)(min.charAt(i)+range));
-					range+=dif/10;
-					for(int j=1;j<9;j++) {
-						ranges[level][j]=new Range(ranges[level][j-1].max,standard+(char)(min.charAt(i)+range));
-						range+=dif/10;
-					}
-					ranges[level][9]=new Range(ranges[level][8].max,max);
-					break;
-				}
+			int minimum= changeStringToInt(min);
+			int maximum= changeStringToInt(max);
+			int difference =maximum- minimum;
+			int range= difference/10;
+			ranges[level][0]=new Range(minimum,minimum+range);
+			for (int i=1;i<9;i++) {
+				int m=(int)ranges[level][i-1].max;
+				ranges[level][i]=new Range(m, m+range);
 			}
+			ranges[level][9]=new Range(ranges[level][8].max,maximum);
 		}
 
 	}
